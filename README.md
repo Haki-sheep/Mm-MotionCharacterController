@@ -20,7 +20,7 @@
 主目录：`Assets/MotionCharacterController`
 
 建议结构：
-- `Docs`：文档
+- `文档`：文档
 - `Scripts/Core/Runtime`：`MotionCC`、`MccSystem`、`MccPhysicsMover`
 - `Scripts/Core/Config`：`MccConfig` 参数
 - `Scripts/Core/Interfaces`：`IMccController`、`IMccMoverController`
@@ -39,7 +39,7 @@
 
 ## 核心设置
 - Unity 版本：建议使用项目当前 Unity 版本打开。
-- 胶囊体：默认半径 `0.5`，高度 `2`，Y 偏移 `1`。
+- 胶囊体：默认半径 `0.5`，高度 `2`，Y 偏移 `0`。
 - 稳定斜坡：默认最大 `60` 度。
 - 台阶：默认开启标准台阶，最大高度 `0.5`。
 - 移动平台：平台物体挂 `Rigidbody`、`MccPhysicsMover`，再写一个实现 `IMccMoverController` 的脚本控制它移动。
