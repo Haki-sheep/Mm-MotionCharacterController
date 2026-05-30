@@ -8,8 +8,6 @@ namespace MotionCharacterController
     public class StepSolver
     {
         private readonly MccMotorContext context;
-        private CollisionSolver collisionSolver;
-        private GroundSolver groundSolver;
 
         public StepSolver(MccMotorContext context)
         {
@@ -17,57 +15,66 @@ namespace MotionCharacterController
         }
 
         /// <summary>
-        /// 绑定依赖的求解器
-        /// 台阶求解需要依赖碰撞求解器、地面求解器
+        /// 检测台阶
         /// </summary>
-        /// <param name="collisionSolver">碰撞求解器</param>
-        /// <param name="groundSolver">地面求解器</param>
-        public void Bind(CollisionSolver collisionSolver, GroundSolver groundSolver)
-        {
-            this.collisionSolver = collisionSolver;
-            this.groundSolver = groundSolver;
-        }
-
-        public HitStabilityReport EvaluateHitStability(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, Vector3 velocity)
-        {
-            return groundSolver.EvaluateHitStability(hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, velocity);
-        }
-
-        public void DetectSteps(Vector3 characterPosition, Quaternion characterRotation, Vector3 hitPoint, Vector3 innerHitDirection, ref HitStabilityReport report)
+        /// <param name="queries">碰撞求解器</param>
+        /// <param name="characterPosition">角色位置</param>
+        /// <param name="characterRotation">角色旋转</param>
+        /// <param name="hitPoint">碰撞点</param>
+        /// <param name="innerHitDirection"> 法线在水平面上朝外的投影向量 
+        /// 该值一般是在没上台阶时 检测到的台阶竖着面的法线在水平面上朝外的投影向量</param>
+        /// <param name="report">稳定性报告</param>
+        public void DetectSteps(
+            CollisionSolver queries,
+            Vector3 characterPosition,
+            Quaternion characterRotation,
+            Vector3 hitPoint,
+            Vector3 innerHitDirection,
+            ref HitStabilityReport report)
         {
             if (innerHitDirection.sqrMagnitude <= 0f)
-            {
                 return;
-            }
 
+            // 获取角色朝上方向
             Vector3 up = characterRotation * Vector3.up;
+            // 获取碰撞点到角色位置的垂直方向
             Vector3 verticalToHit = Vector3.Project(hitPoint - characterPosition, up);
+            // 获取碰撞点到角色位置的平面方向
             Vector3 horizontalDirection = Vector3.ProjectOnPlane(hitPoint - characterPosition, up).normalized;
-            Vector3 start = hitPoint - verticalToHit + up * context.Config.maxStepHeight + horizontalDirection * MccConfig.COLLISION_OFFSET * 3f;
+            // 获取台阶检测起点
+            Vector3 start = hitPoint - verticalToHit + // 将检测到的台阶碰撞点拉低到角色水平位置
+                            up * context.Config.maxStepHeight + // 从标准位置向上抬一个可跨越高度
+                            horizontalDirection * MccConfig.COLLISION_OFFSET * 3f; // 稍微往台阶外偏一点点 避免起点卡在台阶的垂直面上
 
-            int count = collisionSolver.CharacterCollisionsSweep(start, characterRotation, -up, context.Config.maxStepHeight + MccConfig.COLLISION_OFFSET, out _, context.InternalHits, 0f, true);
-            if (CheckStepValidity(count, characterPosition, characterRotation, innerHitDirection, start, out Collider hitCollider))
+            // 检测台阶
+            int count = queries.CharacterCollisionsSweep(start, characterRotation, -up, context.Config.maxStepHeight + MccConfig.COLLISION_OFFSET, out _, context.InternalHits, 0f, true);
+            // 检查台阶是否有效
+            if (CheckStepValidity(queries, count, characterPosition, characterRotation, innerHitDirection, start, out Collider hitCollider))
             {
                 report.ValidStepDetected = true;
                 report.SteppedCollider = hitCollider;
                 return;
             }
 
+            // 如果台阶处理方式不是加强台阶处理 则直接返回
             if (context.Config.stepHandling != StepHandlingMethod.Extra)
             {
                 return;
             }
 
+            // 获取台阶检测起点
             start = characterPosition + up * context.Config.maxStepHeight - innerHitDirection * context.Config.minRequiredStepDepth;
-            count = collisionSolver.CharacterCollisionsSweep(start, characterRotation, -up, context.Config.maxStepHeight - MccConfig.COLLISION_OFFSET, out _, context.InternalHits, 0f, true);
-            if (CheckStepValidity(count, characterPosition, characterRotation, innerHitDirection, start, out hitCollider))
+            // 检测台阶
+            count = queries.CharacterCollisionsSweep(start, characterRotation, -up, context.Config.maxStepHeight - MccConfig.COLLISION_OFFSET, out _, context.InternalHits, 0f, true);
+            // 检查台阶是否有效
+            if (CheckStepValidity(queries, count, characterPosition, characterRotation, innerHitDirection, start, out hitCollider))
             {
                 report.ValidStepDetected = true;
                 report.SteppedCollider = hitCollider;
             }
         }
 
-        public bool TryStep(ref Vector3 movedPosition, ref Vector3 velocity, RaycastHit moveHit, HitStabilityReport report)
+        public bool TryStep(CollisionSolver queries, ref Vector3 movedPosition, ref Vector3 velocity, RaycastHit moveHit, HitStabilityReport report)
         {
             if (report.SteppedCollider == null)
             {
@@ -82,7 +89,7 @@ namespace MotionCharacterController
 
             Vector3 forward = Vector3.ProjectOnPlane(-moveHit.normal, context.CharacterUp).normalized;
             Vector3 start = movedPosition + forward * MccConfig.STEPPING_FORWARD_DISTANCE + context.CharacterUp * context.Config.maxStepHeight;
-            int count = collisionSolver.CharacterCollisionsSweep(start, context.TransientRotation, -context.CharacterUp, context.Config.maxStepHeight, out _, context.InternalHits, 0f, true);
+            int count = queries.CharacterCollisionsSweep(start, context.TransientRotation, -context.CharacterUp, context.Config.maxStepHeight, out _, context.InternalHits, 0f, true);
 
             for (int i = 0; i < count; i++)
             {
@@ -97,7 +104,7 @@ namespace MotionCharacterController
             return false;
         }
 
-        private bool CheckStepValidity(int hitCount, Vector3 characterPosition, Quaternion characterRotation, Vector3 innerHitDirection, Vector3 stepCheckStart, out Collider hitCollider)
+        private bool CheckStepValidity(CollisionSolver queries, int hitCount, Vector3 characterPosition, Quaternion characterRotation, Vector3 innerHitDirection, Vector3 stepCheckStart, out Collider hitCollider)
         {
             hitCollider = null;
             Vector3 up = characterRotation * Vector3.up;
@@ -118,12 +125,12 @@ namespace MotionCharacterController
                 RaycastHit farthestHit = context.InternalHits[farthestIndex];
                 Vector3 candidatePosition = stepCheckStart - up * Mathf.Max(0f, farthestHit.distance - MccConfig.COLLISION_OFFSET);
 
-                bool clearAtStep = collisionSolver.CharacterCollisionsOverlap(candidatePosition, characterRotation, context.InternalColliders) <= 0;
-                bool stableOuter = collisionSolver.CharacterCollisionsRaycast(farthestHit.point + up * MccConfig.SECONDARY_PROBES_VERTICAL - innerHitDirection * MccConfig.SECONDARY_PROBES_HORIZONTAL, -up, context.Config.maxStepHeight + MccConfig.SECONDARY_PROBES_VERTICAL, out RaycastHit outerHit, context.InternalHits, true) > 0
+                bool clearAtStep = queries.CharacterCollisionsOverlap(candidatePosition, characterRotation, context.InternalColliders) <= 0;
+                bool stableOuter = queries.CharacterCollisionsRaycast(farthestHit.point + up * MccConfig.SECONDARY_PROBES_VERTICAL - innerHitDirection * MccConfig.SECONDARY_PROBES_HORIZONTAL, -up, context.Config.maxStepHeight + MccConfig.SECONDARY_PROBES_VERTICAL, out RaycastHit outerHit, context.InternalHits, true) > 0
                                    && context.IsStableOnNormal(outerHit.normal);
-                bool clearAbove = collisionSolver.CharacterCollisionsSweep(characterPosition, characterRotation, up, context.Config.maxStepHeight - farthestHit.distance, out _, context.InternalHits) <= 0;
+                bool clearAbove = queries.CharacterCollisionsSweep(characterPosition, characterRotation, up, context.Config.maxStepHeight - farthestHit.distance, out _, context.InternalHits) <= 0;
                 bool stableInner = context.Config.allowSteppingWithoutStableGrounding
-                                   || collisionSolver.CharacterCollisionsRaycast(characterPosition + Vector3.Project(candidatePosition - characterPosition, up), -up, context.Config.maxStepHeight, out RaycastHit innerHit, context.InternalHits, true) > 0
+                                   || queries.CharacterCollisionsRaycast(characterPosition + Vector3.Project(candidatePosition - characterPosition, up), -up, context.Config.maxStepHeight, out RaycastHit innerHit, context.InternalHits, true) > 0
                                    && context.IsStableOnNormal(innerHit.normal);
 
                 if (clearAtStep && stableOuter && clearAbove && stableInner)

@@ -8,7 +8,9 @@ namespace MotionCharacterController
     public class RigidbodySolver
     {
         private readonly MccMotorContext context;
-        private readonly RigidbodyProjectionHit[] hits = new RigidbodyProjectionHit[MccConfig.MAX_RIGIDBODY_HITS];
+        // 刚体碰撞信息数组
+        private readonly RigidbodyProjectionHit[] hitArray = new RigidbodyProjectionHit[MccConfig.MAX_RIGIDBODY_HITS];
+        // 刚体碰撞信息数量
         private int hitCount;
 
         public RigidbodySolver(MccMotorContext context)
@@ -21,14 +23,20 @@ namespace MotionCharacterController
             hitCount = 0;
         }
 
+        /// <summary>
+        /// 存储刚体碰撞信息
+        /// </summary>
+        /// <param name="body">刚体</param>
+        /// <param name="velocity">速度</param>
+        /// <param name="point">碰撞点</param>
+        /// <param name="normal">碰撞法线</param>
         public void StoreHit(Rigidbody body, Vector3 velocity, Vector3 point, Vector3 normal)
         {
-            if (body == null || hitCount >= hits.Length)
-            {
+            if (body is null || hitCount >= hitArray.Length)
                 return;
-            }
 
-            hits[hitCount] = new RigidbodyProjectionHit
+            // 存储刚体碰撞信息
+            hitArray[hitCount] = new RigidbodyProjectionHit
             {
                 Rigidbody = body,
                 HitVelocity = velocity,
@@ -47,7 +55,7 @@ namespace MotionCharacterController
 
             for (int i = 0; i < hitCount; i++)
             {
-                RigidbodyProjectionHit hit = hits[i];
+                RigidbodyProjectionHit hit = hitArray[i];
                 if (hit.Rigidbody == null || hit.Rigidbody == context.AttachedRigidbody)
                 {
                     continue;

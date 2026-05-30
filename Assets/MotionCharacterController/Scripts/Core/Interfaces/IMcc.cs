@@ -79,12 +79,12 @@ namespace MotionCharacterController
         /// <summary>
         /// 给玩法层最后一次修改稳定性报告的机会
         /// </summary>
-        /// <param name="hitCollider"></param>
-        /// <param name="hitNormal"></param>
-        /// <param name="hitPoint"></param>
-        /// <param name="atCharacterPosition"></param>
-        /// <param name="atCharacterRotation"></param>
-        /// <param name="hitStabilityReport"></param>
+        /// <param name="hitCollider">碰撞体</param>
+        /// <param name="hitNormal">碰撞法线</param>
+        /// <param name="hitPoint">碰撞点</param>
+        /// <param name="atCharacterPosition">角色位置</param>
+        /// <param name="atCharacterRotation">角色旋转</param>
+        /// <param name="hitStabilityReport">稳定性报告</param>
         void ProcessHitStabilityReport(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport);
 
         /// <summary> 

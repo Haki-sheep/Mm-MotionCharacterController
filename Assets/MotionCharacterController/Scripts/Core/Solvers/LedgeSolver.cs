@@ -5,27 +5,17 @@ namespace MotionCharacterController
     /// <summary>
     /// 边缘检测与处理
     /// </summary>
-    public class LedgeSolver
+    public static class LedgeSolver
     {
-        private readonly MccMotorContext context;
-        private CollisionSolver collisionSolver;
-
-        public LedgeSolver(MccMotorContext context)
-        {
-            this.context = context;
-        }
-
-        /// <summary>
-        /// 绑定依赖的求解器
-        /// 边缘检测需要依赖碰撞求解器
-        /// </summary>
-        /// <param name="collisionSolver">碰撞求解器</param>
-        public void Bind(CollisionSolver collisionSolver)
-        {
-            this.collisionSolver = collisionSolver;
-        }
-
-        public void ProcessLedgeStability(Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, Vector3 velocity, ref HitStabilityReport report)
+        public static void ProcessLedgeStability(
+            MccMotorContext context,
+            CollisionSolver queries,
+            Vector3 hitNormal,
+            Vector3 hitPoint,
+            Vector3 atCharacterPosition,
+            Quaternion atCharacterRotation,
+            Vector3 velocity,
+            ref HitStabilityReport report)
         {
             if (!context.Config.ledgeAndDenivelationHandling)
             {
@@ -43,14 +33,14 @@ namespace MotionCharacterController
             bool innerStable = false;
             bool outerStable = false;
 
-            if (collisionSolver.CharacterCollisionsRaycast(hitPoint + up * MccConfig.SECONDARY_PROBES_VERTICAL + innerDirection * MccConfig.SECONDARY_PROBES_HORIZONTAL, -up, checkHeight + MccConfig.SECONDARY_PROBES_VERTICAL, out RaycastHit innerHit, context.InternalHits) > 0)
+            if (queries.CharacterCollisionsRaycast(hitPoint + up * MccConfig.SECONDARY_PROBES_VERTICAL + innerDirection * MccConfig.SECONDARY_PROBES_HORIZONTAL, -up, checkHeight + MccConfig.SECONDARY_PROBES_VERTICAL, out RaycastHit innerHit, context.InternalHits) > 0)
             {
                 report.InnerNormal = innerHit.normal;
                 report.FoundInnerNormal = true;
                 innerStable = context.IsStableOnNormal(innerHit.normal);
             }
 
-            if (collisionSolver.CharacterCollisionsRaycast(hitPoint + up * MccConfig.SECONDARY_PROBES_VERTICAL - innerDirection * MccConfig.SECONDARY_PROBES_HORIZONTAL, -up, checkHeight + MccConfig.SECONDARY_PROBES_VERTICAL, out RaycastHit outerHit, context.InternalHits) > 0)
+            if (queries.CharacterCollisionsRaycast(hitPoint + up * MccConfig.SECONDARY_PROBES_VERTICAL - innerDirection * MccConfig.SECONDARY_PROBES_HORIZONTAL, -up, checkHeight + MccConfig.SECONDARY_PROBES_VERTICAL, out RaycastHit outerHit, context.InternalHits) > 0)
             {
                 report.OuterNormal = outerHit.normal;
                 report.FoundOuterNormal = true;
@@ -70,11 +60,11 @@ namespace MotionCharacterController
 
             if (report.IsStable)
             {
-                report.IsStable = IsStableWithSpecialCases(ref report, velocity);
+                report.IsStable = IsStableWithSpecialCases(context, ref report, velocity);
             }
         }
 
-        public bool IsStableWithSpecialCases(ref HitStabilityReport report, Vector3 velocity)
+        public static bool IsStableWithSpecialCases(MccMotorContext context, ref HitStabilityReport report, Vector3 velocity)
         {
             if (!context.Config.ledgeAndDenivelationHandling)
             {

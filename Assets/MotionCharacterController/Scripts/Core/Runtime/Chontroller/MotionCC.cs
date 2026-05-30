@@ -22,7 +22,6 @@ namespace MotionCharacterController
         private CollisionSolver collisionSolver;
         private GroundSolver groundSolver;
         private StepSolver stepSolver;
-        private LedgeSolver ledgeSolver;
         private PlatformSolver platformSolver;
         private RigidbodySolver rigidbodySolver;
         private IMcc controller;
@@ -70,7 +69,7 @@ namespace MotionCharacterController
         {
             ValidateData();
             InitializeSolvers();
-            FindController();
+            controller = GetComponent<IMcc>();
         }
 
         private void OnEnable()
@@ -85,10 +84,14 @@ namespace MotionCharacterController
 
         private void Update()
         {
-            FindController();
+            // 更新输入方向和跳跃请求
             controller?.InputVectorUpdate(ref inputDirection, ref jumpRequested);
         }
 
+        /// <summary>
+        /// 预模拟帧
+        /// </summary>
+        /// <param name="deltaTime">时间差</param>
         internal void PreSimulationTick(float deltaTime)
         {
             context.InitialTickPosition = context.TransientPosition;
@@ -96,40 +99,49 @@ namespace MotionCharacterController
             context.Transform.SetPositionAndRotation(context.TransientPosition, context.TransientRotation);
         }
 
+        /// <summary>
+        /// 更新阶段1
+        /// 此阶段主要更新
+        /// </summary>
+        /// <param name="deltaTime">时间差</param>
         internal void UpdatePhase1(float deltaTime)
         {
-            FindController();
-            ValidateData();
             context.BeginSimulation();
             context.SanitizeVelocity();
             rigidbodySolver.Clear();
 
             controller?.BeforeCharacterUpdate(deltaTime);
 
+            // 如果移动位置标记为脏
             if (context.MovePositionDirty)
             {
-                Vector3 moveVelocity = GetVelocityFromMovement(context.MovePositionTarget - context.TransientPosition, deltaTime);
+                var moveDistance = context.MovePositionTarget - context.TransientPosition;
+                var moveVelocity = GetVelocityFromMovement(moveDistance, deltaTime);
+                // 如果需要解决移动碰撞
                 if (context.SolveMovementCollisions)
-                {
                     collisionSolver.Move(ref moveVelocity, deltaTime);
-                }
                 else
-                {
                     context.TransientPosition = context.MovePositionTarget;
-                }
+                
                 context.MovePositionDirty = false;
             }
-
+    
+            // 如果需要解决移动碰撞
             if (context.SolveMovementCollisions)
-            {
                 collisionSolver.ResolveInitialOverlaps();
-            }
 
+            // 更新接地状态
             groundSolver.UpdateGrounding(deltaTime);
+            // 后接地更新
             controller?.PostGroundingUpdate(deltaTime);
+            // 更新平台附件
             platformSolver.UpdateAttachment(deltaTime);
         }
 
+        /// <summary>
+        /// 更新阶段2
+        /// </summary>
+        /// <param name="deltaTime">时间差</param>
         internal void UpdatePhase2(float deltaTime)
         {
             Quaternion rotation = context.TransientRotation;
@@ -199,25 +211,30 @@ namespace MotionCharacterController
                 Quaternion.Slerp(context.InitialTickRotation, context.TransientRotation, factor));
         }
 
+
+        /// <summary>
+        /// 校验数据
+        /// </summary>
         private void ValidateData()
         {
-            if (context.Transform == null)
-            {
+            if (context.Transform is null)
                 context.Transform = transform;
-            }
 
+            // 注意这里 从Unity获取胶囊体组件 后续给到Context 相当于程序的入口
             context.Capsule = GetComponent<CapsuleCollider>();
             context.Config = config;
             context.Owner = this;
             context.Transform.localScale = Vector3.one;
 
-            if (context.Capsule != null)
+            // 设置Context中的胶囊体尺寸
+            if (context.Capsule is not null)
             {
                 SetCapsuleDimensions(config.capsuleRadius, config.capsuleHeight, config.capsuleYOffset);
                 context.Capsule.direction = 1;
                 context.Capsule.sharedMaterial = config.capsulePhysicsMaterial;
             }
 
+            // 刷新Context中的可碰撞层和角色朝向
             context.RefreshCollidableLayers();
             context.RefreshCharacterAxes();
         }
@@ -231,23 +248,10 @@ namespace MotionCharacterController
                 return;
 
             stepSolver = new StepSolver(context);
-            ledgeSolver = new LedgeSolver(context);
             rigidbodySolver = new RigidbodySolver(context);
             collisionSolver = new CollisionSolver(context, stepSolver, rigidbodySolver);
-            groundSolver = new GroundSolver(context, collisionSolver, stepSolver, ledgeSolver);
-            
-            stepSolver.Bind(collisionSolver, groundSolver);
-            ledgeSolver.Bind(collisionSolver);
-
+            groundSolver = new GroundSolver(context, collisionSolver, stepSolver);
             platformSolver = new PlatformSolver(context, collisionSolver);
-        }
-
-        private void FindController()
-        {
-            if (controller == null)
-            {
-                controller = GetComponent<IMcc>();
-            }
         }
     }
 }

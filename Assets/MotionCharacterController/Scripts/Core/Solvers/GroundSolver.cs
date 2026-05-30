@@ -10,21 +10,12 @@ namespace MotionCharacterController
         private readonly MccMotorContext context;
         private readonly CollisionSolver collisionSolver;
         private readonly StepSolver stepSolver;
-        private readonly LedgeSolver ledgeSolver;
 
-        /// <summary>
-        /// 地面求解需要依赖碰撞求解器、台阶求解器、边缘求解器
-        /// </summary>
-        /// <param name="context">上下文</param>
-        /// <param name="collisionSolver">碰撞求解器</param>
-        /// <param name="stepSolver">台阶求解器</param>
-        /// <param name="ledgeSolver">边缘求解器</param>
-        public GroundSolver(MccMotorContext context, CollisionSolver collisionSolver, StepSolver stepSolver, LedgeSolver ledgeSolver)
+        public GroundSolver(MccMotorContext context, CollisionSolver collisionSolver, StepSolver stepSolver)
         {
             this.context = context;
             this.collisionSolver = collisionSolver;
             this.stepSolver = stepSolver;
-            this.ledgeSolver = ledgeSolver;
         }
 
         public void UpdateGrounding(float deltaTime)
@@ -81,7 +72,16 @@ namespace MotionCharacterController
                 }
 
                 Vector3 targetPosition = sweepPosition + sweepDirection * hit.distance;
-                HitStabilityReport stability = EvaluateHitStability(hit.collider, hit.normal, hit.point, targetPosition, rotation, context.BaseVelocity);
+                HitStabilityReport stability = HitStabilityEvaluator.Evaluate(
+                    context,
+                    collisionSolver,
+                    stepSolver,
+                    hit.collider,
+                    hit.normal,
+                    hit.point,
+                    targetPosition,
+                    rotation,
+                    context.BaseVelocity);
                 report.FoundAnyGround = true;
                 report.GroundNormal = hit.normal;
                 report.InnerGroundNormal = stability.InnerNormal;
@@ -92,7 +92,7 @@ namespace MotionCharacterController
 
                 if (stability.IsStable)
                 {
-                    report.SnappingPrevented = !ledgeSolver.IsStableWithSpecialCases(ref stability, context.BaseVelocity);
+                    report.SnappingPrevented = !LedgeSolver.IsStableWithSpecialCases(context, ref stability, context.BaseVelocity);
                     report.IsStableOnGround = true;
                     if (!report.SnappingPrevented)
                     {
@@ -108,39 +108,6 @@ namespace MotionCharacterController
                 remainingDistance = Mathf.Min(MccConfig.GROUND_REBOUND_DISTANCE, Mathf.Max(remainingDistance - sweepMovement.magnitude, 0f));
                 sweepDirection = Vector3.ProjectOnPlane(sweepDirection, hit.normal).normalized;
             }
-        }
-
-        public HitStabilityReport EvaluateHitStability(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, Vector3 velocity)
-        {
-            HitStabilityReport report = new HitStabilityReport
-            {
-                IsStable = context.SolveGrounding && context.IsStableOnNormal(hitNormal),
-                InnerNormal = hitNormal,
-                OuterNormal = hitNormal,
-            };
-
-            if (!context.SolveGrounding)
-            {
-                return report;
-            }
-
-            ledgeSolver.ProcessLedgeStability(hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, velocity, ref report);
-
-            if (context.Config.stepHandling != StepHandlingMethod.None && !report.IsStable)
-            {
-                Rigidbody body = hitCollider != null ? hitCollider.attachedRigidbody : null;
-                if (!(body != null && !body.isKinematic))
-                {
-                    stepSolver.DetectSteps(atCharacterPosition, atCharacterRotation, hitPoint, Vector3.ProjectOnPlane(hitNormal, atCharacterRotation * Vector3.up).normalized, ref report);
-                    if (report.ValidStepDetected)
-                    {
-                        report.IsStable = true;
-                    }
-                }
-            }
-
-            context.Owner.Controller?.ProcessHitStabilityReport(hitCollider, hitNormal, hitPoint, atCharacterPosition, atCharacterRotation, ref report);
-            return report;
         }
 
         private bool CharacterGroundSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit)

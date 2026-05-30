@@ -123,8 +123,7 @@ namespace MotionCharacterController
         }
 
         /// <summary>
-        /// 刷新胶囊体数据
-        /// 胶囊体中心 胶囊体中心到Transform的转换 胶囊体底部到Transform的转换 胶囊体顶部到Transform的转换 胶囊体底部半球到Transform的转换 胶囊体顶部半球到Transform的转换
+        /// 刷新Context中的胶囊体数据
         /// </summary>
         public void RefreshCapsuleData()
         {
@@ -212,8 +211,8 @@ namespace MotionCharacterController
             Rigidbody attachedRigidbody = coll.attachedRigidbody;
             if (attachedRigidbody is not null)
             {
+                // 不做下面判断 会导致角色和移动平台打架 或者 不符合角色的刚体交互类型的表现
                 // 如果角色状态是跟着附着的刚体移动 且 附着的刚体是当前附着的刚体 则不参与碰撞/地面检测
-                // 如果不做此判断 会导致角色和移动平台打架
                 if (IsMovingFromAttachedRigidbody && attachedRigidbody == AttachedRigidbody)
                 {
                     return false;

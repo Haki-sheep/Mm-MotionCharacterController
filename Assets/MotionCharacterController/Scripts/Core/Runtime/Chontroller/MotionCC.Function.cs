@@ -48,18 +48,31 @@ namespace MotionCharacterController
             return context.MustUnground || context.MustUngroundTimeCounter > 0f;
         }
 
+        /// <summary>
+        /// 直接移动角色到目标位置
+        /// </summary>
+        /// <param name="toPosition">目标位置</param>
         public void MoveCharacter(Vector3 toPosition)
         {
             context.MovePositionDirty = true;
             context.MovePositionTarget = toPosition;
         }
 
+        /// <summary>
+        /// 直接旋转角色到目标旋转
+        /// </summary>
+        /// <param name="toRotation">目标旋转</param>
         public void RotateCharacter(Quaternion toRotation)
         {
             context.MoveRotationDirty = true;
             context.MoveRotationTarget = toRotation;
         }
 
+        /// <summary>
+        /// 直接设置角色位置
+        /// </summary>
+        /// <param name="position">目标位置</param>
+        /// <param name="bypassInterpolation">是否绕过插值</param>
         public void SetPosition(Vector3 position, bool bypassInterpolation = true)
         {
             context.Transform.position = position;
@@ -71,6 +84,11 @@ namespace MotionCharacterController
             }
         }
 
+        /// <summary>
+        /// 直接设置角色旋转
+        /// </summary>
+        /// <param name="rotation">目标旋转</param>
+        /// <param name="bypassInterpolation">是否绕过插值</param>
         public void SetRotation(Quaternion rotation, bool bypassInterpolation = true)
         {
             context.Transform.rotation = rotation;
@@ -82,6 +100,12 @@ namespace MotionCharacterController
             }
         }
 
+        /// <summary>
+        /// 直接设置角色位置和旋转
+        /// </summary>
+        /// <param name="position">目标位置</param>
+        /// <param name="rotation">目标旋转</param>
+        /// <param name="bypassInterpolation">是否绕过插值</param>
         public void SetPositionAndRotation(Vector3 position, Quaternion rotation, bool bypassInterpolation = true)
         {
             context.Transform.SetPositionAndRotation(position, rotation);
@@ -96,21 +120,26 @@ namespace MotionCharacterController
             }
         }
 
+        /// <summary>
+        /// 设置Context中的胶囊体尺寸
+        /// </summary>
+        /// <param name="radius">半径</param>
+        /// <param name="height">高度</param>
+        /// <param name="yOffset">Y偏移</param>
         public void SetCapsuleDimensions(float radius, float height, float yOffset)
         {
-            if (context.Capsule == null)
-            {
+            if (context.Capsule is null)
                 return;
-            }
 
             height = Mathf.Max(height, radius * 2f + MccConfig.COLLISION_OFFSET);
             config.capsuleRadius = Mathf.Clamp(radius, 0f, height * 0.5f);
             config.capsuleHeight = height;
             config.capsuleYOffset = yOffset;
-
+            // 设置Context中的胶囊体尺寸
             context.Capsule.radius = config.capsuleRadius;
             context.Capsule.height = config.capsuleHeight;
-            context.Capsule.center = new Vector3(0f, config.capsuleYOffset, 0f);
+            context.Capsule.center = new(0f, config.capsuleYOffset, 0f);
+            // 刷新Context中的胶囊体数据
             context.RefreshCapsuleData();
         }
 
@@ -132,9 +161,15 @@ namespace MotionCharacterController
             context.SolveGrounding = active;
         }
 
+        /// <summary>
+        /// 获取移动速度
+        /// </summary>
+        /// <param name="movement">移动距离</param>
+        /// <param name="deltaTime">时间差</param>
+        /// <returns>移动速度</returns>
         public Vector3 GetVelocityFromMovement(Vector3 movement, float deltaTime)
         {
-            return deltaTime <= 0f ? Vector3.zero : movement / deltaTime;
+            return movement / deltaTime;
         }
 
         public Vector3 GetDirectionTangentToSurface(Vector3 direction, Vector3 surfaceNormal)
