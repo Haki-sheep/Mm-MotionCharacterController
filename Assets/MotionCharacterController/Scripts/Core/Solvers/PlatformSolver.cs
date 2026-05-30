@@ -2,11 +2,19 @@ using UnityEngine;
 
 namespace MotionCharacterController
 {
+    /// <summary>
+    /// 移动平台求解器
+    /// </summary>
     public class PlatformSolver
     {
         private readonly MccMotorContext context;
         private readonly CollisionSolver collisionSolver;
 
+        /// <summary>
+        /// 移动平台求解需要依赖碰撞求解器
+        /// </summary>
+        /// <param name="context">上下文</param>
+        /// <param name="collisionSolver">碰撞求解器</param>
         public PlatformSolver(MccMotorContext context, CollisionSolver collisionSolver)
         {
             this.context = context;

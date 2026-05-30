@@ -1,7 +1,7 @@
 using MotionCharacterController;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, IMccController
+public class PlayerController : MonoBehaviour, IMcc
 {
     [SerializeField] private ExampleMCharacterCamera characterCamera;
     [SerializeField, Range(0f, 1f)] private float inputDeadZone = 0.1f;

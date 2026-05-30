@@ -17,6 +17,7 @@ namespace MotionCharacterController
         [SerializeField]
         private bool drawGroundGizmos = true;
 
+        #region 变量
         private readonly MccMotorContext context = new MccMotorContext();
         private CollisionSolver collisionSolver;
         private GroundSolver groundSolver;
@@ -24,13 +25,15 @@ namespace MotionCharacterController
         private LedgeSolver ledgeSolver;
         private PlatformSolver platformSolver;
         private RigidbodySolver rigidbodySolver;
-        private IMccController controller;
+        private IMcc controller;
         private Vector3 inputDirection;
         private bool jumpRequested;
+        #endregion
 
+        #region 属性
         public MccConfig Config => config;
         public MccMotorContext Context => context;
-        public IMccController Controller => controller;
+        public IMcc Controller => controller;
         public CharacterGroundingReport GroundingStatus => context.GroundingStatus;
         public CharacterTransientGroundingReport LastGroundingStatus => context.LastGroundingStatus;
         public Vector3 InputDirection => inputDirection;
@@ -53,12 +56,11 @@ namespace MotionCharacterController
             get => context.BaseVelocity;
             set => context.BaseVelocity = value;
         }
+        #endregion
 
-        private void Reset()
-        {
-            ValidateData();
-        }
-
+        /// <summary>
+        /// 在Inspector中修改时触发 ValidateData 校验数据
+        /// </summary>
         private void OnValidate()
         {
             ValidateData();
@@ -73,9 +75,6 @@ namespace MotionCharacterController
 
         private void OnEnable()
         {
-            ValidateData();
-            InitializeSolvers();
-            FindController();
             MccSystem.RegisterCharacter(this);
         }
 
@@ -172,6 +171,10 @@ namespace MotionCharacterController
             controller?.AfterCharacterUpdate(deltaTime);
         }
 
+        /// <summary>
+        /// 提交模拟
+        /// </summary>
+        /// <param name="interpolate">是否插值</param>
         internal void CommitSimulation(bool interpolate)
         {
             if (interpolate)
@@ -184,8 +187,13 @@ namespace MotionCharacterController
             }
         }
 
+        /// <summary>
+        /// 插值更新
+        /// </summary>
+        /// <param name="factor">插值系数</param>
         internal void InterpolationUpdate(float factor)
         {
+            // 插值位置和旋转
             context.Transform.SetPositionAndRotation(
                 Vector3.Lerp(context.InitialTickPosition, context.TransientPosition, factor),
                 Quaternion.Slerp(context.InitialTickRotation, context.TransientRotation, factor));
@@ -214,20 +222,23 @@ namespace MotionCharacterController
             context.RefreshCharacterAxes();
         }
 
+        /// <summary>
+        /// 初始化求解器
+        /// </summary>
         private void InitializeSolvers()
         {
-            if (collisionSolver != null)
-            {
+            if (collisionSolver is not null)
                 return;
-            }
 
             stepSolver = new StepSolver(context);
             ledgeSolver = new LedgeSolver(context);
             rigidbodySolver = new RigidbodySolver(context);
             collisionSolver = new CollisionSolver(context, stepSolver, rigidbodySolver);
             groundSolver = new GroundSolver(context, collisionSolver, stepSolver, ledgeSolver);
+            
             stepSolver.Bind(collisionSolver, groundSolver);
-            ledgeSolver.Bind(collisionSolver, groundSolver);
+            ledgeSolver.Bind(collisionSolver);
+
             platformSolver = new PlatformSolver(context, collisionSolver);
         }
 
@@ -235,7 +246,7 @@ namespace MotionCharacterController
         {
             if (controller == null)
             {
-                controller = GetComponent<IMccController>();
+                controller = GetComponent<IMcc>();
             }
         }
     }

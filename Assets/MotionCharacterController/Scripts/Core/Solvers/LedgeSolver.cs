@@ -2,21 +2,27 @@ using UnityEngine;
 
 namespace MotionCharacterController
 {
+    /// <summary>
+    /// 边缘检测与处理
+    /// </summary>
     public class LedgeSolver
     {
         private readonly MccMotorContext context;
         private CollisionSolver collisionSolver;
-        private GroundSolver groundSolver;
 
         public LedgeSolver(MccMotorContext context)
         {
             this.context = context;
         }
 
-        public void Bind(CollisionSolver collisionSolver, GroundSolver groundSolver)
+        /// <summary>
+        /// 绑定依赖的求解器
+        /// 边缘检测需要依赖碰撞求解器
+        /// </summary>
+        /// <param name="collisionSolver">碰撞求解器</param>
+        public void Bind(CollisionSolver collisionSolver)
         {
             this.collisionSolver = collisionSolver;
-            this.groundSolver = groundSolver;
         }
 
         public void ProcessLedgeStability(Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, Vector3 velocity, ref HitStabilityReport report)

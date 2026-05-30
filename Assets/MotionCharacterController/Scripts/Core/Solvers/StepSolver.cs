@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace MotionCharacterController
 {
+    /// <summary>
+    /// 台阶检测与处理
+    /// </summary>
     public class StepSolver
     {
         private readonly MccMotorContext context;
@@ -13,6 +16,12 @@ namespace MotionCharacterController
             this.context = context;
         }
 
+        /// <summary>
+        /// 绑定依赖的求解器
+        /// 台阶求解需要依赖碰撞求解器、地面求解器
+        /// </summary>
+        /// <param name="collisionSolver">碰撞求解器</param>
+        /// <param name="groundSolver">地面求解器</param>
         public void Bind(CollisionSolver collisionSolver, GroundSolver groundSolver)
         {
             this.collisionSolver = collisionSolver;

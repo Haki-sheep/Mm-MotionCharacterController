@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace MotionCharacterController
 {
+    /// <summary>
+    /// 刚体碰撞投影求解器
+    /// </summary>
     public class RigidbodySolver
     {
         private readonly MccMotorContext context;
@@ -18,7 +21,7 @@ namespace MotionCharacterController
             hitCount = 0;
         }
 
-        public void StoreHit(Rigidbody body, Vector3 velocity, Vector3 point, Vector3 normal, HitStabilityReport report)
+        public void StoreHit(Rigidbody body, Vector3 velocity, Vector3 point, Vector3 normal)
         {
             if (body == null || hitCount >= hits.Length)
             {
@@ -31,7 +34,6 @@ namespace MotionCharacterController
                 HitVelocity = velocity,
                 HitPoint = point,
                 EffectiveHitNormal = normal,
-                StableOnHit = report.IsStable,
             };
             hitCount++;
         }

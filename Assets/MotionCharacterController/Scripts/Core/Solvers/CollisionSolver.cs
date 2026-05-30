@@ -2,12 +2,22 @@ using UnityEngine;
 
 namespace MotionCharacterController
 {
+    /// <summary>
+    /// 碰撞检测与处理
+    /// </summary>
     public class CollisionSolver
     {
         private readonly MccMotorContext context;
         private readonly StepSolver stepSolver;
         private readonly RigidbodySolver rigidbodySolver;
 
+
+        /// <summary>
+        /// 碰撞求解需要依赖台阶求解器、刚体求解器
+        /// </summary>
+        /// <param name="context">上下文</param>
+        /// <param name="stepSolver">台阶求解器</param>
+        /// <param name="rigidbodySolver">刚体求解器</param>
         public CollisionSolver(MccMotorContext context, StepSolver stepSolver, RigidbodySolver rigidbodySolver)
         {
             this.context = context;
@@ -113,7 +123,7 @@ namespace MotionCharacterController
                     context.Owner.Controller?.OnMovementHit(hit.collider, hit.normal, hit.point, ref report);
                     if (hit.collider != null && hit.collider.attachedRigidbody != null)
                     {
-                        rigidbodySolver.StoreHit(hit.collider.attachedRigidbody, velocity, hit.point, obstructionNormal, report);
+                        rigidbodySolver.StoreHit(hit.collider.attachedRigidbody, velocity, hit.point, obstructionNormal);
                     }
 
                     bool stableOnHit = report.IsStable && !context.Owner.MustUnground();

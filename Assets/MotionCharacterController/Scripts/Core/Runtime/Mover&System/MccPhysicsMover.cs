@@ -8,7 +8,7 @@ namespace MotionCharacterController
         [SerializeField]
         private bool moveWithPhysics = true;
 
-        private IMccMoverController moverController;
+        private IMover moverController;
         private Vector3 transientPosition;
         private Quaternion transientRotation;
         private Vector3 initialSimulationPosition;
@@ -65,7 +65,7 @@ namespace MotionCharacterController
         {
             if (moverController == null)
             {
-                moverController = GetComponent<IMccMoverController>();
+                moverController = GetComponent<IMover>();
             }
         }
 
