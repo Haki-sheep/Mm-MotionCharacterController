@@ -4,11 +4,18 @@ namespace MotionCharacterController
 {
     public partial class MotionCC
     {
+        /// <summary>
+        /// 消耗跳跃请求
+        /// </summary>
         public void ConsumeJumpRequest()
         {
             jumpRequested = false;
         }
 
+        /// <summary>
+        /// 获取状态
+        /// </summary>
+        /// <returns>状态</returns>
         public MotionCharacterMotorState GetState()
         {
             return new MotionCharacterMotorState
@@ -25,6 +32,11 @@ namespace MotionCharacterController
             };
         }
 
+        /// <summary>
+        /// 应用状态
+        /// </summary>
+        /// <param name="state">状态</param>
+        /// <param name="bypassInterpolation">是否绕过插值</param>
         public void ApplyState(MotionCharacterMotorState state, bool bypassInterpolation = true)
         {
             SetPositionAndRotation(state.Position, state.Rotation, bypassInterpolation);
@@ -37,12 +49,20 @@ namespace MotionCharacterController
             context.AttachedRigidbodyVelocity = state.AttachedRigidbodyVelocity;
         }
 
+        /// <summary>
+        /// 强制解除接地状态
+        /// </summary>
+        /// <param name="time">解除接地状态时间</param>
         public void ForceUnground(float time = 0.1f)
         {
             context.MustUnground = true;
             context.MustUngroundTimeCounter = time;
         }
-
+        
+        /// <summary>
+        /// 是否需要解除接地状态
+        /// </summary>
+        /// <returns>是否需要解除接地状态</returns>
         public bool MustUnground()
         {
             return context.MustUnground || context.MustUngroundTimeCounter > 0f;
@@ -143,6 +163,10 @@ namespace MotionCharacterController
             context.RefreshCapsuleData();
         }
 
+        /// <summary>
+        /// 设置胶囊体碰撞激活状态
+        /// </summary>
+        /// <param name="collisionsActive">是否激活</param>
         public void SetCapsuleCollisionsActivation(bool collisionsActive)
         {
             if (context.Capsule != null)
@@ -151,11 +175,19 @@ namespace MotionCharacterController
             }
         }
 
+        /// <summary>
+        /// 设置移动碰撞解算激活状态
+        /// </summary>
+        /// <param name="active">是否激活</param>
         public void SetMovementCollisionsSolvingActivation(bool active)
         {
             context.SolveMovementCollisions = active;
         }
 
+        /// <summary>
+        /// 设置地面检测解算激活状态
+        /// </summary>
+        /// <param name="active">是否激活</param>
         public void SetGroundSolvingActivation(bool active)
         {
             context.SolveGrounding = active;
@@ -172,26 +204,66 @@ namespace MotionCharacterController
             return movement / deltaTime;
         }
 
+        /// <summary>
+        /// 获取方向向量在某个表面切线方向上的重定向结果
+        /// </summary>
+        /// <param name="direction">原始方向</param>
+        /// <param name="surfaceNormal">表面法线</param>
+        /// <returns>沿表面切线的方向</returns>
         public Vector3 GetDirectionTangentToSurface(Vector3 direction, Vector3 surfaceNormal)
         {
             return context.GetDirectionTangentToSurface(direction, surfaceNormal);
         }
 
+        /// <summary>
+        /// 获取角色碰撞体与某个位置的碰撞信息
+        /// </summary>
+        /// <param name="position">位置</param>
+        /// <param name="rotation">旋转</param>
+        /// <param name="overlappedColliders">碰撞体数组</param>
+        /// <param name="inflate">膨胀量</param>
+        /// <param name="acceptOnlyStableGroundLayer">是否只接受稳定地面层</param>
+        /// <returns>碰撞体数量</returns>
         public int CharacterCollisionsOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
         {
             return collisionSolver.CharacterCollisionsOverlap(position, rotation, overlappedColliders, inflate, acceptOnlyStableGroundLayer);
         }
 
+        /// <summary>
+        /// 获取角色碰撞体与某个方向的碰撞信息
+        /// </summary>
+        /// <param name="position">位置</param>
+        /// <param name="rotation">旋转</param>
+        /// <param name="direction">方向</param>
+        /// <param name="distance">距离</param>
+        /// <param name="closestHit">最近碰撞信息</param>
+        /// <param name="hits">碰撞信息数组</param>
+        /// <param name="inflate">膨胀量</param>
+        /// <param name="acceptOnlyStableGroundLayer">是否只接受稳定地面层</param>
+        /// <returns>碰撞体数量</returns>
         public int CharacterCollisionsSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
         {
             return collisionSolver.CharacterCollisionsSweep(position, rotation, direction, distance, out closestHit, hits, inflate, acceptOnlyStableGroundLayer);
         }
 
+        /// <summary>
+        /// 获取角色碰撞体与某个方向的碰撞信息 射线检测
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="direction">方向</param>
+        /// <param name="distance">距离</param>
+        /// <param name="closestHit">最近碰撞信息</param>
+        /// <param name="hits">碰撞信息数组</param>
+        /// <param name="acceptOnlyStableGroundLayer">是否只接受稳定地面层</param>
+        /// <returns>碰撞体数量</returns>
         public int CharacterCollisionsRaycast(Vector3 position, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, bool acceptOnlyStableGroundLayer = false)
         {
             return collisionSolver.CharacterCollisionsRaycast(position, direction, distance, out closestHit, hits, acceptOnlyStableGroundLayer);
         }
 
+        /// <summary>
+        /// 绘制地面检测Gizmos
+        /// </summary>
         private void OnDrawGizmosSelected()
         {
             if (!drawGroundGizmos)

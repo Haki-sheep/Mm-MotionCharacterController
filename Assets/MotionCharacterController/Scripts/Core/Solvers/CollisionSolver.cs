@@ -13,7 +13,7 @@ namespace MotionCharacterController
 
 
         /// <summary>
-        /// 碰撞求解需要依赖台阶求解器、刚体求解器
+        /// 碰撞求解需要依赖台阶求解器与刚体求解器
         /// </summary>
         /// <param name="context">上下文</param>
         /// <param name="stepSolver">台阶求解器</param>
@@ -40,6 +40,7 @@ namespace MotionCharacterController
                 for (int i = 0; i < count; i++)
                 {
                     Collider other = context.InternalColliders[i];
+                    // 如果碰撞体无效 则跳过
                     if (!context.IsColliderValidForCollisions(other))
                         continue;
 
@@ -72,6 +73,7 @@ namespace MotionCharacterController
 
                 if (solved)
                 {
+                    // 没有重叠了 则结束迭代
                     break;
                 }
             }
@@ -130,7 +132,7 @@ namespace MotionCharacterController
                                              out RaycastHit hit,
                                              context.InternalHits) <= 0)
                 {
-                    // 如果没有扫到东西 则直接累计剩余距离 (方向 * 大小)
+                    // 如果没有扫到东西 则直接累计剩余距离
                     movedPosition += remainingDirection * remainingMagnitude;
                     remainingMagnitude = 0f;
                     break;
@@ -182,7 +184,7 @@ namespace MotionCharacterController
                         rigidbodySolver.StoreHit(hit.collider.attachedRigidbody, velocity, hit.point, obstructionNormal);
                     }
 
-                    // 处理速度投影 就是将剩余的速度投影到障碍物的法线的切线方向上(沿墙滑)
+                    // 处理速度投影 将剩余速度投影到障碍物切线方向实现沿墙滑
                     bool stableOnHit = report.IsStable && !context.Owner.MustUnground();
                     Vector3 velocityBeforeProjection = velocity;
                     HandleVelocityProjection(stableOnHit,
@@ -225,13 +227,18 @@ namespace MotionCharacterController
             return completed;
         }
 
+        /// <summary>
+        /// 处理离散碰撞事件
+        /// </summary>
         public void ProcessDiscreteCollisionEvents()
         {
+            // 如果未开启离散碰撞事件 则直接返回
             if (!context.Config.discreteCollisionEvents)
             {
                 return;
             }
 
+            // 检测当前位置是否与碰撞体重叠
             int count = CharacterCollisionsOverlap(context.TransientPosition, context.TransientRotation, context.InternalColliders, MccConfig.COLLISION_OFFSET * 2f);
             for (int i = 0; i < count; i++)
             {
@@ -317,10 +324,10 @@ namespace MotionCharacterController
             // 进行胶囊体扫掠
             var rawCount = Physics.CapsuleCastNonAlloc(bottom,
                                                        top,
-                                                       context.Capsule.radius + inflate, // 胶囊体半径 + 膨胀
+                                                       context.Capsule.radius + inflate,
                                                        normalizedDirection,
                                                        hits,
-                                                       distance + MccConfig.SWEEP_BACKSTEP_DISTANCE, // 往外扩一点 避免扫掠时卡在胶囊体外部
+                                                       distance + MccConfig.SWEEP_BACKSTEP_DISTANCE,
                                                        queryLayers,
                                                        QueryTriggerInteraction.Ignore);
             // 过滤碰撞
@@ -330,10 +337,23 @@ namespace MotionCharacterController
                               out closestHit);
         }
 
+        /// <summary>
+        /// 角色碰撞体射线检测
+        /// </summary>
+        /// <param name="position">起点</param>
+        /// <param name="direction">方向</param>
+        /// <param name="distance">距离</param>
+        /// <param name="closestHit">最近碰撞</param>
+        /// <param name="hits">碰撞数组</param>
+        /// <param name="acceptOnlyStableGroundLayer">只接受稳定地面层</param>
+        /// <returns>碰撞数</returns>
         public int CharacterCollisionsRaycast(Vector3 position, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, bool acceptOnlyStableGroundLayer = false)
         {
+            // 获取查询层
             int queryLayers = acceptOnlyStableGroundLayer ? context.CollidableLayers & context.Config.stableGroundLayers : context.CollidableLayers;
+            // 进行射线检测
             int rawCount = Physics.RaycastNonAlloc(position, direction, hits, distance, queryLayers, QueryTriggerInteraction.Ignore);
+            // 过滤碰撞
             return FilterHits(hits, rawCount, 0f, out closestHit);
         }
 
@@ -481,19 +501,29 @@ namespace MotionCharacterController
             remainingMagnitude *= velocityFactor;
             remainingDirection = velocity.sqrMagnitude > 0f ? velocity.normalized : Vector3.zero;
         }
-
+        /// <summary>
+        /// 投影速度
+        /// </summary>
+        /// <param name="velocity">速度</param>
+        /// <param name="obstructionNormal">障碍物法线</param>
+        /// <param name="stableOnHit">是否稳定</param>
         private void ProjectVelocity(ref Vector3 velocity, Vector3 obstructionNormal, bool stableOnHit)
         {
+            // 如果角色稳定在地面上 且 没有离地 则投影速度
             if (context.GroundingStatus.IsStableOnGround && !context.Owner.MustUnground())
             {
+                // 如果命中稳定 则投影速度
                 if (stableOnHit)
                 {
                     velocity = context.GetDirectionTangentToSurface(velocity, obstructionNormal) * velocity.magnitude;
                 }
                 else
                 {
+                    // 获取障碍物右侧方向
                     Vector3 obstructionRightAlongGround = Vector3.Cross(obstructionNormal, context.GroundingStatus.GroundNormal).normalized;
+                    // 获取障碍物上方方向
                     Vector3 obstructionUpAlongGround = Vector3.Cross(obstructionRightAlongGround, obstructionNormal).normalized;
+                    // 投影速度
                     velocity = context.GetDirectionTangentToSurface(velocity, obstructionUpAlongGround) * velocity.magnitude;
                     velocity = Vector3.ProjectOnPlane(velocity, obstructionNormal);
                 }
@@ -509,6 +539,18 @@ namespace MotionCharacterController
             }
         }
 
+        /// <summary>
+        /// 评估内角折线阻挡
+        /// </summary>
+        /// <param name="currentVelocity">当前速度</param>
+        /// <param name="previousVelocity">上一帧速度</param>
+        /// <param name="currentNormal">当前法线</param>
+        /// <param name="previousNormal">上一帧法线</param>
+        /// <param name="currentStable">当前稳定状态</param>
+        /// <param name="previousStable">上一帧稳定状态</param>
+        /// <param name="characterStable">角色稳定状态</param>
+        /// <param name="validCrease">是否有效折线</param>
+        /// <param name="creaseDirection">折线方向</param>
         private static void EvaluateCrease(Vector3 currentVelocity, Vector3 previousVelocity, Vector3 currentNormal, Vector3 previousNormal, bool currentStable, bool previousStable, bool characterStable, out bool validCrease, out Vector3 creaseDirection)
         {
             validCrease = false;
@@ -524,9 +566,13 @@ namespace MotionCharacterController
                 return;
             }
 
+            // 获取当前法线在折线平面上的投影
             Vector3 normalA = Vector3.ProjectOnPlane(currentNormal, tmpCreaseDirection).normalized;
+            // 获取上一帧法线在折线平面上的投影
             Vector3 normalB = Vector3.ProjectOnPlane(previousNormal, tmpCreaseDirection).normalized;
+            // 获取上一帧速度在折线平面上的投影
             Vector3 enteringVelocity = Vector3.ProjectOnPlane(previousVelocity, tmpCreaseDirection).normalized;
+            // 获取两个法线之间的夹角
             float dotPlanes = Vector3.Dot(normalA, normalB);
             if (dotPlanes <= Vector3.Dot(-enteringVelocity, normalA) + 0.001f && dotPlanes <= Vector3.Dot(-enteringVelocity, normalB) + 0.001f)
             {
@@ -535,14 +581,23 @@ namespace MotionCharacterController
             }
         }
 
+
+        /// <summary>
+        /// 过滤碰撞体
+        /// </summary>
+        /// <param name="colliders">碰撞体数组</param>
+        /// <param name="count">碰撞体数量</param>
+        /// <returns>有效的碰撞体数量</returns>
         private int FilterColliders(Collider[] colliders, int count)
         {
             int validCount = count;
+            // 从后往前移除无效碰撞体
             for (int i = count - 1; i >= 0; i--)
             {
                 if (!context.IsColliderValidForCollisions(colliders[i]))
                 {
                     validCount--;
+                    // 用尾部有效项填当前洞
                     if (i < validCount)
                     {
                         colliders[i] = colliders[validCount];
@@ -571,7 +626,7 @@ namespace MotionCharacterController
             {
                 // 减去后退距离
                 hits[i].distance -= backstep;
-                // 如果碰撞距离小于0 (卡在胶囊体内部了) 或者 碰撞体无效 则认为该碰撞无效
+                // 如果碰撞距离小于等于0 或碰撞体无效 则视为无效
                 if (hits[i].distance <= 0f || !context.IsColliderValidForCollisions(hits[i].collider))
                 {
                     validCount--;

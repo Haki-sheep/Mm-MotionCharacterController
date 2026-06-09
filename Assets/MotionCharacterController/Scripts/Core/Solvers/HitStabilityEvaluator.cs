@@ -3,8 +3,8 @@ using UnityEngine;
 namespace MotionCharacterController
 {
     /// <summary>
-    /// 此类为工具类
-    /// 为了解决Mcc的Init里 GroundSolver 与 CollisionSolver 循环依赖问题
+    /// 碰撞面稳定性评估
+    /// 地面探测与移动扫掠共用 避免 GroundSolver 与 CollisionSolver 循环依赖
     /// </summary>
     public static class HitStabilityEvaluator
     {
@@ -52,26 +52,25 @@ namespace MotionCharacterController
             // 处理台阶稳定性
             if (context.Config.stepHandling is not StepHandlingMethod.None && !report.IsStable)
             {
-                // 获取碰撞体的刚体
+                // 获取碰撞体挂载的刚体
                 Rigidbody body = hitCollider is not null ? hitCollider.attachedRigidbody : null;
+                // 仅对静态或运动学碰撞体做台阶检测 动态刚体跳过
                 if (!(body is not null && !body.isKinematic))
                 {
-                    // 检测台阶
                     stepSolver.DetectSteps(
                         queries,
                         atCharacterPosition,
                         atCharacterRotation,
                         hitPoint,
-                        // 法线在水平面上朝外的投影向量
                         Vector3.ProjectOnPlane(hitNormal, atCharacterRotation * Vector3.up).normalized,
                         ref report);
-                    // 如果检测到台阶 则设置为稳定
+                    // 如果检测到台阶 则视为稳定地面
                     if (report.ValidStepDetected)
                         report.IsStable = true;
                 }
             }
 
-            // 外部开发者处理稳定性报告
+            // 外部开发者最后一次修改稳定性报告
             context.Owner.Controller?.ProcessHitStabilityReport(
                 hitCollider,
                 hitNormal,
@@ -80,7 +79,6 @@ namespace MotionCharacterController
                 atCharacterRotation,
                 ref report);
 
-            // 返回稳定性报告
             return report;
         }
     }
