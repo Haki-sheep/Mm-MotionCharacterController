@@ -228,4 +228,19 @@ namespace MotionCharacterController
             Collider = collider;
         }
     }
+
+    /// <summary>
+    /// 单次移动命中 统一重叠与扫掠两种来源
+    /// </summary>
+    public struct MovementHit
+    {
+        /// <summary>命中碰撞体</summary>
+        public Collider Collider;
+        /// <summary>命中法线</summary>
+        public Vector3 Normal;
+        /// <summary>命中点</summary>
+        public Vector3 Point;
+        /// <summary>命中距离 重叠时为 0</summary>
+        public float Distance;
+    }
 }

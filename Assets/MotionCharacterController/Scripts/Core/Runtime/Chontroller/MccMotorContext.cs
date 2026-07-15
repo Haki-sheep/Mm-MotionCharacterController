@@ -107,6 +107,29 @@ namespace MotionCharacterController
         // 内部碰撞体
         public readonly Collider[] InternalColliders = new Collider[MccConfig.MAX_COLLISION_OVERLAPS];
 
+        #region 调试采样
+        /// <summary>本帧移动扫掠状态</summary>
+        public MovementSweepState DebugLastSweepState;
+        /// <summary>本帧移动迭代次数</summary>
+        public int DebugLastMovementSweeps;
+        /// <summary>本帧移动是否在迭代上限内完成</summary>
+        public bool DebugLastMoveCompleted = true;
+        /// <summary>本帧最近命中点</summary>
+        public Vector3 DebugLastHitPoint;
+        /// <summary>本帧最近命中法线</summary>
+        public Vector3 DebugLastHitNormal;
+        /// <summary>本帧是否有移动命中</summary>
+        public bool DebugHasMovementHit;
+        /// <summary>本帧地面探测距离</summary>
+        public float DebugGroundProbeDistance;
+        /// <summary>本帧 Phase1 耗时秒</summary>
+        public float DebugPhase1Seconds;
+        /// <summary>本帧 Phase2 耗时秒</summary>
+        public float DebugPhase2Seconds;
+        /// <summary>上一帧附着刚体 用于换平台检测</summary>
+        public Rigidbody DebugPreviousAttachedRigidbody;
+        #endregion
+
         /// <summary>
         /// 开始模拟
         /// 重置瞬时位置和旋转 初始模拟位置和旋转 重叠数量 上一帧接地状态 当前帧接地状态
@@ -120,6 +143,10 @@ namespace MotionCharacterController
             OverlapsCount = 0;
             LastGroundingStatus.CopyFrom(GroundingStatus);
             GroundingStatus = new CharacterGroundingReport { GroundNormal = CharacterUp, InnerGroundNormal = CharacterUp, OuterGroundNormal = CharacterUp };
+            DebugHasMovementHit = false;
+            DebugLastSweepState = MovementSweepState.Initial;
+            DebugLastMovementSweeps = 0;
+            DebugLastMoveCompleted = true;
         }
 
         /// <summary>

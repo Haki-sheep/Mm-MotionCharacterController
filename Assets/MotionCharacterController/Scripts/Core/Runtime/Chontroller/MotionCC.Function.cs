@@ -281,7 +281,7 @@ namespace MotionCharacterController
             Vector3 bottomHemi = transform.position + transform.rotation * (capsule.center + Vector3.down * (capsule.height * 0.5f - capsule.radius));
             Vector3 probeOrigin = bottomHemi + up * MccConfig.GROUND_START_OFFSET;
             float probeRadius = Mathf.Max(MccConfig.SKIN_WIDTH, capsule.radius - MccConfig.SKIN_WIDTH);
-            float probeDistance = config.groundProbeDistance + MccConfig.GROUND_START_OFFSET;
+            float probeDistance = Mathf.Max(MccConfig.MIN_GROUND_PROBING_DISTANCE, config.groundProbeDistance) + config.groundDetectionExtraDistance + MccConfig.GROUND_START_OFFSET;
             Vector3 probeEnd = probeOrigin - up * probeDistance;
 
             Gizmos.color = Color.white;

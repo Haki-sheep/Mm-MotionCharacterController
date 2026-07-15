@@ -78,10 +78,10 @@ namespace MotionCharacterController
         /// <param name="queries">碰撞求解器</param>
         /// <param name="movedPosition">移动后位置</param>
         /// <param name="velocity">速度</param>
-        /// <param name="moveHit">移动扫掠命中</param>
+        /// <param name="hitNormal">移动命中法线</param>
         /// <param name="report">稳定性报告</param>
         /// <returns>是否成功上台阶</returns>
-        public bool TryStep(CollisionSolver queries, ref Vector3 movedPosition, ref Vector3 velocity, RaycastHit moveHit, HitStabilityReport report)
+        public bool TryStep(CollisionSolver queries, ref Vector3 movedPosition, ref Vector3 velocity, Vector3 hitNormal, HitStabilityReport report)
         {
             // 如果没有记录台阶碰撞体 则失败
             if (report.SteppedCollider == null)
@@ -90,14 +90,14 @@ namespace MotionCharacterController
             }
 
             // 如果阻挡面太接近垂直 则不适合当作台阶前进面
-            float obstructionCorrelation = Mathf.Abs(Vector3.Dot(moveHit.normal, context.CharacterUp));
+            float obstructionCorrelation = Mathf.Abs(Vector3.Dot(hitNormal, context.CharacterUp));
             if (obstructionCorrelation > 0.15f)
             {
                 return false;
             }
 
             // 计算前进方向与抬脚检测起点
-            Vector3 forward = Vector3.ProjectOnPlane(-moveHit.normal, context.CharacterUp).normalized;
+            Vector3 forward = Vector3.ProjectOnPlane(-hitNormal, context.CharacterUp).normalized;
             Vector3 start = movedPosition + forward * MccConfig.STEPPING_FORWARD_DISTANCE + context.CharacterUp * context.Config.maxStepHeight;
             // 从起点向下扫 找台阶顶面碰撞体
             int count = queries.CharacterCollisionsSweep(start, context.TransientRotation, -context.CharacterUp, context.Config.maxStepHeight, out _, context.InternalHits, 0f, true);

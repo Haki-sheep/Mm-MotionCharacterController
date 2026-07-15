@@ -8,9 +8,9 @@ namespace MotionCharacterController
     public class RigidbodySolver
     {
         private readonly MccMotorContext context;
-        // 本帧刚体碰撞记录数组
+        /// <summary>本帧刚体碰撞记录数组</summary>
         private readonly RigidbodyProjectionHit[] hitArray = new RigidbodyProjectionHit[MccConfig.MAX_RIGIDBODY_HITS];
-        // 本帧已记录数量
+        /// <summary>本帧已记录数量</summary>
         private int hitCount;
 
         public RigidbodySolver(MccMotorContext context)
@@ -35,9 +35,10 @@ namespace MotionCharacterController
         /// <param name="normal">碰撞法线</param>
         public void StoreHit(Rigidbody body, Vector3 velocity, Vector3 point, Vector3 normal)
         {
-            // 如果刚体为空或数组已满 则跳过
             if (body is null || hitCount >= hitArray.Length)
+            {
                 return;
+            }
 
             hitArray[hitCount] = new RigidbodyProjectionHit
             {
@@ -56,7 +57,6 @@ namespace MotionCharacterController
         /// <param name="deltaTime">时间差</param>
         public void ProcessVelocityForHits(ref Vector3 velocity, float deltaTime)
         {
-            // 如果未开启刚体交互 则直接返回
             if (!context.Config.interactiveRigidbodyHandling)
             {
                 return;
@@ -65,33 +65,58 @@ namespace MotionCharacterController
             for (int i = 0; i < hitCount; i++)
             {
                 RigidbodyProjectionHit hit = hitArray[i];
-                // 跳过空引用或当前站立的平台刚体
                 if (hit.Rigidbody == null || hit.Rigidbody == context.AttachedRigidbody)
                 {
                     continue;
                 }
 
-                // 仅处理动态刚体
                 bool dynamicBody = !hit.Rigidbody.isKinematic;
+                float characterToBodyMassRatio = ResolveMassRatio(hit.Rigidbody, dynamicBody);
                 if (!dynamicBody)
                 {
                     continue;
                 }
 
                 Vector3 bodyVelocity = hit.Rigidbody.linearVelocity;
-                // 计算角色与刚体在法线方向上的速度分配
                 ComputeCollisionResolution(
                     hit.EffectiveHitNormal,
                     hit.HitVelocity,
                     bodyVelocity,
-                    context.Config.rigidbodyInteractionType == RigidbodyInteractionType.SimulatedDynamic ? 0.5f : 1f,
+                    characterToBodyMassRatio,
                     out Vector3 characterVelocityChange,
                     out Vector3 bodyVelocityChange);
 
-                // 更新角色速度并对刚体施加冲量
                 velocity += characterVelocityChange;
                 hit.Rigidbody.AddForceAtPosition(bodyVelocityChange, hit.HitPoint, ForceMode.VelocityChange);
             }
+        }
+
+        /// <summary>
+        /// 按角色模拟质量与刚体质量计算碰撞质量占比
+        /// </summary>
+        /// <param name="body">命中刚体</param>
+        /// <param name="dynamicBody">是否动态刚体</param>
+        /// <returns>角色质量占比</returns>
+        private float ResolveMassRatio(Rigidbody body, bool dynamicBody)
+        {
+            if (!dynamicBody)
+            {
+                return 0f;
+            }
+
+            if (context.Config.rigidbodyInteractionType == RigidbodyInteractionType.Kinematic)
+            {
+                return 1f;
+            }
+
+            float characterMass = context.Config.simulatedCharacterMass;
+            float hitBodyMass = body.mass;
+            if (characterMass + hitBodyMass > 0f)
+            {
+                return characterMass / (characterMass + hitBodyMass);
+            }
+
+            return 0.5f;
         }
 
         /// <summary>
@@ -108,17 +133,14 @@ namespace MotionCharacterController
             velocityChangeOnCharacter = Vector3.zero;
             velocityChangeOnBody = Vector3.zero;
             float bodyToCharacterMassRatio = 1f - characterToBodyMassRatio;
-            // 分解角色与刚体在法线方向上的速度分量
             float characterVelocityOnNormal = Vector3.Dot(characterVelocity, hitNormal);
             float bodyVelocityOnNormal = Vector3.Dot(bodyVelocity, hitNormal);
 
-            // 消去角色沿法线朝内的速度
             if (characterVelocityOnNormal < 0f)
             {
                 velocityChangeOnCharacter += hitNormal * characterVelocityOnNormal;
             }
 
-            // 按质量比分配相对碰撞速度
             if (bodyVelocityOnNormal > characterVelocityOnNormal)
             {
                 Vector3 relativeImpactVelocity = hitNormal * (bodyVelocityOnNormal - characterVelocityOnNormal);

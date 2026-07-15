@@ -40,11 +40,8 @@ namespace MotionCharacterController
             else
             {
                 // 计算探测距离
-                float distance = MccConfig.MIN_GROUND_PROBING_DISTANCE + context.Config.groundDetectionExtraDistance;
-                if (!context.LastGroundingStatus.SnappingPrevented && (context.LastGroundingStatus.IsStableOnGround || context.LastMovementIterationFoundAnyGround))
-                {
-                    distance = Mathf.Max(context.Capsule.radius, context.Config.maxStepHeight) + context.Config.groundDetectionExtraDistance;
-                }
+                float distance = GetSelectedGroundProbeDistance(context);
+                context.DebugGroundProbeDistance = distance;
 
                 // 探测地面
                 Vector3 probePosition = context.TransientPosition;
@@ -172,6 +169,23 @@ namespace MotionCharacterController
             }
 
             return found;
+        }
+
+        /// <summary>
+        /// 按接地状态选择本帧地面探测距离
+        /// </summary>
+        /// <param name="context">电机上下文</param>
+        /// <returns>探测距离</returns>
+        public static float GetSelectedGroundProbeDistance(MccMotorContext context)
+        {
+            float extra = context.Config.groundDetectionExtraDistance;
+            if (!context.LastGroundingStatus.SnappingPrevented
+                && (context.LastGroundingStatus.IsStableOnGround || context.LastMovementIterationFoundAnyGround))
+            {
+                return Mathf.Max(context.Capsule.radius, context.Config.maxStepHeight) + extra;
+            }
+
+            return Mathf.Max(MccConfig.MIN_GROUND_PROBING_DISTANCE, context.Config.groundProbeDistance) + extra;
         }
     }
 }

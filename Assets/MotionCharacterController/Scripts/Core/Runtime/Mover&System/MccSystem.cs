@@ -4,23 +4,20 @@ using UnityEngine;
 namespace MotionCharacterController
 {
     /// <summary>
-    /// 运动学角色系统 
+    /// 运动学角色系统
     /// </summary>
     [DefaultExecutionOrder(-100)]
     public class MccSystem : MonoBehaviour
     {
         private static MccSystem instance;
-        // 插值开始时间
+        /// <summary>系统级自动模拟开关 由角色 Config.autoSimulation 同步</summary>
+        public static bool AutoSimulation = true;
+
         private static float interpolationStartTime;
-        // 插值时间间隔
         private static float interpolationDeltaTime = 0.02f;
 
-        // 角色列表
         public static readonly List<MotionCC> Characters = new List<MotionCC>(32);
-        // 物理移动器列表
         public static readonly List<MccPhysicsMover> Movers = new List<MccPhysicsMover>(16);
-
-
 
         private void Awake()
         {
@@ -29,54 +26,20 @@ namespace MotionCharacterController
 
         private void FixedUpdate()
         {
-            float deltaTime = Time.fixedDeltaTime;
-            bool interpolate = ShouldInterpolate();
-
-            // 记录本帧起始位置
-            for (int i = 0; i < Characters.Count; i++)
+            if (!AutoSimulation)
             {
-                Characters[i].PreSimulationTick(deltaTime);
+                return;
             }
 
-            // 算平台速度
-            for (int i = 0; i < Movers.Count; i++)
-            {
-                Movers[i].VelocityUpdate(deltaTime);
-            }
-
-            // 接地过程 平台附着 
-            for (int i = 0; i < Characters.Count; i++)
-            {
-                Characters[i].UpdatePhase1(deltaTime);
-            }
-
-            // 平台先移动到目标位置
-            for (int i = 0; i < Movers.Count; i++)
-            {
-                Movers[i].CommitMovement();
-            }
-
-            // 更新角色速度 移动和碰撞
-            for (int i = 0; i < Characters.Count; i++)
-            {
-                Characters[i].UpdatePhase2(deltaTime);
-            }
-
-            // 插值
-            interpolationStartTime = Time.time;
-            interpolationDeltaTime = deltaTime;
-
-            // 提交模拟
-            for (int i = 0; i < Characters.Count; i++)
-            {
-                Characters[i].CommitSimulation(interpolate);
-            }
+            Simulate(Time.fixedDeltaTime);
         }
 
         private void LateUpdate()
         {
             if (!ShouldInterpolate())
-                return; 
+            {
+                return;
+            }
 
             float factor = Mathf.Clamp01((Time.time - interpolationStartTime) / interpolationDeltaTime);
             for (int i = 0; i < Characters.Count; i++)
@@ -85,9 +48,51 @@ namespace MotionCharacterController
             }
         }
 
+        /// <summary>
+        /// 手动或自动驱动一整帧模拟
+        /// </summary>
+        /// <param name="deltaTime">时间差</param>
+        public static void Simulate(float deltaTime)
+        {
+            CreatMccSystem();
+            bool interpolate = ShouldInterpolate();
+
+            for (int i = 0; i < Characters.Count; i++)
+            {
+                Characters[i].PreSimulationTick(deltaTime);
+            }
+
+            for (int i = 0; i < Movers.Count; i++)
+            {
+                Movers[i].VelocityUpdate(deltaTime);
+            }
+
+            for (int i = 0; i < Characters.Count; i++)
+            {
+                Characters[i].UpdatePhase1(deltaTime);
+            }
+
+            for (int i = 0; i < Movers.Count; i++)
+            {
+                Movers[i].CommitMovement();
+            }
+
+            for (int i = 0; i < Characters.Count; i++)
+            {
+                Characters[i].UpdatePhase2(deltaTime);
+            }
+
+            interpolationStartTime = Time.time;
+            interpolationDeltaTime = deltaTime;
+
+            for (int i = 0; i < Characters.Count; i++)
+            {
+                Characters[i].CommitSimulation(interpolate);
+            }
+        }
 
         /// <summary>
-        /// 
+        /// 创建系统单例
         /// </summary>
         public static void CreatMccSystem()
         {
@@ -103,9 +108,9 @@ namespace MotionCharacterController
         }
 
         /// <summary>
-        /// 注册角色
+        /// 注册角色并同步系统自动模拟开关
         /// </summary>
-        /// <param name="character"></param>
+        /// <param name="character">角色</param>
         public static void RegisterCharacter(MotionCC character)
         {
             CreatMccSystem();
@@ -113,21 +118,24 @@ namespace MotionCharacterController
             {
                 Characters.Add(character);
             }
+
+            SyncAutoSimulationFromCharacters();
         }
 
         /// <summary>
         /// 注销角色
         /// </summary>
-        /// <param name="character"></param>
+        /// <param name="character">角色</param>
         public static void UnregisterCharacter(MotionCC character)
         {
             Characters.Remove(character);
+            SyncAutoSimulationFromCharacters();
         }
 
         /// <summary>
         /// 注册物理移动器
         /// </summary>
-        /// <param name="mover"></param>
+        /// <param name="mover">移动器</param>
         public static void RegisterMover(MccPhysicsMover mover)
         {
             CreatMccSystem();
@@ -140,16 +148,31 @@ namespace MotionCharacterController
         /// <summary>
         /// 注销物理移动器
         /// </summary>
-        /// <param name="mover"></param>
+        /// <param name="mover">移动器</param>
         public static void UnregisterMover(MccPhysicsMover mover)
         {
             Movers.Remove(mover);
         }
 
         /// <summary>
-        /// 是否需要插值
+        /// 根据已注册角色同步 AutoSimulation 任一关闭则系统关闭
         /// </summary>
-        /// <returns></returns>
+        public static void SyncAutoSimulationFromCharacters()
+        {
+            bool auto = true;
+            for (int i = 0; i < Characters.Count; i++)
+            {
+                MotionCC character = Characters[i];
+                if (character != null && !character.Config.autoSimulation)
+                {
+                    auto = false;
+                    break;
+                }
+            }
+
+            AutoSimulation = auto;
+        }
+
         private static bool ShouldInterpolate()
         {
             for (int i = 0; i < Characters.Count; i++)

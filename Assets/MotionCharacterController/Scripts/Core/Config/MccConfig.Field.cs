@@ -14,13 +14,14 @@ namespace MotionCharacterController
         public PhysicsMaterial capsulePhysicsMaterial;
 
         [Header("示例移动")]
+        [Tooltip("示例 PlayerController 地面目标速度")]
         public float moveSpeed = 6f;
+        [Tooltip("示例 PlayerController 转向速度")]
         public float rotationSpeed = 10f;
+        [Tooltip("示例 PlayerController 地面速度插值锐度")]
         public float stableMovementSharpness = 15f;
-        public float GroundAcceleration = 35f;
-        public float GroundDeceleration = 45f;
+        [Tooltip("示例 PlayerController 空中加速")]
         public float AirAcceleration = 15f;
-        public float AirDeceleration = 5f;
 
         [Header("跳跃和重力")]
         public float jumpSpeed = 8f;
@@ -28,11 +29,9 @@ namespace MotionCharacterController
         public float airDrag = 0.1f;
 
         [Header("地面")]
-        [Tooltip("旧参数保留项：最大可站立坡度新逻辑主要使用 Max Stable Slope Angle")]
-        public float maxSlopeAngle = 60f;
         [Tooltip("角色能稳定站住的最大坡度角比如 60 表示小于等于 60 度的斜坡都算地面")]
         public float maxStableSlopeAngle = 60f;
-        [Tooltip("向脚下探测地面的基础距离太小可能下坡时容易短暂离地，太大可能吸地感过强")]
+        [Tooltip("未稳定接地时的基础探测距离 太小下坡易短暂离地 太大吸地感过强")]
         public float groundProbeDistance = 0.2f;
         [Tooltip("额外增加的地面探测距离高速移动、下坡、台阶场景可以适当加大")]
         public float groundDetectionExtraDistance = 0f;
@@ -83,7 +82,7 @@ namespace MotionCharacterController
         public int maxMovementIterations = 5;
         [Tooltip("角色一开始卡进墙里时，最多尝试推出几次一般 1 到 3 就够")]
         public int maxDecollisionIterations = 1;
-        [Tooltip("移动前是否先检查初始重叠开启后更不容易穿模，但会多一点检测开销")]
+        [Tooltip("移动迭代内是否先检查起步重叠 开启后更不容易穿模")]
         public bool checkMovementInitialOverlaps = true;
         [Tooltip("超过最大移动迭代次数时是否清空速度开启能避免角色在复杂墙角里疯狂抖动")]
         public bool killVelocityWhenExceedMaxMovementIterations = true;
@@ -91,7 +90,7 @@ namespace MotionCharacterController
         public bool killRemainingMovementWhenExceedMaxMovementIterations = true;
 
         [Header("系统")]
-        [Tooltip("是否由 MCC 系统自动在 FixedUpdate 中模拟普通用法保持开启")]
+        [Tooltip("系统级开关 写入后同步到 MccSystem.AutoSimulation 关闭后需自行调用 MccSystem.Simulate")]
         public bool autoSimulation = true;
         [Tooltip("是否开启角色显示位置插值开启后画面更顺；如果相机或角色抖动，可临时关闭对比测试")]
         public bool interpolate = true;

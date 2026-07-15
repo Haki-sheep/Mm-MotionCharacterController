@@ -63,6 +63,7 @@ namespace MotionCharacterController
         private void OnValidate()
         {
             ValidateData();
+            MccSystem.SyncAutoSimulationFromCharacters();
         }
 
         private void Awake()
@@ -106,6 +107,7 @@ namespace MotionCharacterController
         /// <param name="deltaTime">时间差</param>
         internal void UpdatePhase1(float deltaTime)
         {
+            float phaseStart = Time.realtimeSinceStartup;
             context.BeginSimulation();
             context.SanitizeVelocity();
             rigidbodySolver.Clear();
@@ -136,6 +138,7 @@ namespace MotionCharacterController
             controller?.PostGroundingUpdate(deltaTime);
             // 更新平台附件
             platformSolver.UpdateAttachment(deltaTime);
+            context.DebugPhase1Seconds = Time.realtimeSinceStartup - phaseStart;
         }
 
         /// <summary>
@@ -144,6 +147,7 @@ namespace MotionCharacterController
         /// <param name="deltaTime">时间差</param>
         internal void UpdatePhase2(float deltaTime)
         {
+            float phaseStart = Time.realtimeSinceStartup;
             Quaternion rotation = context.TransientRotation;
             controller?.UpdateRotation(ref rotation, deltaTime);
             context.TransientRotation = rotation.normalized;
@@ -181,6 +185,7 @@ namespace MotionCharacterController
             rigidbodySolver.ProcessVelocityForHits(ref context.BaseVelocity, deltaTime);
             collisionSolver.ProcessDiscreteCollisionEvents();
             controller?.AfterCharacterUpdate(deltaTime);
+            context.DebugPhase2Seconds = Time.realtimeSinceStartup - phaseStart;
         }
 
         /// <summary>

@@ -89,30 +89,25 @@ namespace MotionCharacterController
         public bool Move(ref Vector3 velocity, float deltaTime)
         {
             if (deltaTime <= 0f)
+            {
                 return false;
+            }
 
-            // 如果存在平台约束 则将速度直接投影到被约束平面上
             if (context.Config.hasPlanarConstraint)
+            {
                 velocity = Vector3.ProjectOnPlane(velocity, context.Config.planarConstraintAxis.normalized);
+            }
 
-            // 初始化迭代完成状态与方向
-            var completed = true;
-            var originalDirection = velocity.normalized;
-
-            // 迭代后剩余信息
-            var remainingDirection = originalDirection;
-            var remainingMagnitude = velocity.magnitude * deltaTime;
-
-            // 移动与扫掠信息
-            var movedPosition = context.TransientPosition;
+            bool completed = true;
+            Vector3 remainingDirection = velocity.normalized;
+            float remainingMagnitude = velocity.magnitude * deltaTime;
+            Vector3 movedPosition = context.TransientPosition;
             var sweepState = MovementSweepState.Initial;
 
-            // 上一次扫掠的稳定状态、速度、障碍物法线
-            var previousHitStable = false;
-            var previousVelocity = Vector3.zero;
-            var previousObstructionNormal = Vector3.zero;
+            bool previousHitStable = false;
+            Vector3 previousVelocity = Vector3.zero;
+            Vector3 previousObstructionNormal = Vector3.zero;
 
-            // 处理已知的重叠信息
             ProjectAgainstKnownOverlaps(ref velocity,
                                         ref remainingMagnitude,
                                         ref remainingDirection,
@@ -124,88 +119,40 @@ namespace MotionCharacterController
             int sweeps = 0;
             while (remainingMagnitude > MccConfig.MIN_CANMOVE_DISTANCE && sweeps <= context.Config.maxMovementIterations)
             {
-                // 过滤碰撞体并进行扫略检测
-                if (CharacterCollisionsSweep(movedPosition,
-                                             context.TransientRotation,
-                                             remainingDirection,
-                                             remainingMagnitude + MccConfig.COLLISION_OFFSET,
-                                             out RaycastHit hit,
-                                             context.InternalHits) <= 0)
+                // 1 先找下一步会撞到什么 没有就直接走完
+                if (!TryFindNextMovementHit(movedPosition, remainingDirection, remainingMagnitude, out MovementHit hit))
                 {
-                    // 如果没有扫到东西 则直接累计剩余距离
                     movedPosition += remainingDirection * remainingMagnitude;
                     remainingMagnitude = 0f;
                     break;
                 }
 
-                // 扫略结束后 计算扫略移动距离
-                Vector3 sweepMovement = remainingDirection
-                                            * Mathf.Max(0f, hit.distance - MccConfig.COLLISION_OFFSET);
+                // 2 走到命中点前
+                Vector3 sweepMovement = remainingDirection * Mathf.Max(0f, hit.Distance - MccConfig.COLLISION_OFFSET);
                 movedPosition += sweepMovement;
                 remainingMagnitude -= sweepMovement.magnitude;
+                WriteDebugHit(hit);
 
-                // 评估扫略稳定性 判断是台阶 坡 还是墙体
+                // 3 评估稳定性 必要时上台阶 否则投影滑动
                 HitStabilityReport report = HitStabilityEvaluator.Evaluate(
                     context,
                     this,
                     stepSolver,
-                    hit.collider,
-                    hit.normal,
-                    hit.point,
+                    hit.Collider,
+                    hit.Normal,
+                    hit.Point,
                     movedPosition,
                     context.TransientRotation,
                     velocity);
-                
-                // 处理台阶
-                bool stepped = false;
-                if (context.SolveGrounding 
-                    && context.Config.stepHandling != StepHandlingMethod.None 
-                        && report.ValidStepDetected)
+
+                if (!TryResolveStep(ref movedPosition, ref velocity, ref remainingDirection, ref remainingMagnitude, deltaTime, hit.Normal, report))
                 {
-                    stepped = stepSolver.TryStep(this, ref movedPosition, ref velocity, hit, report);
-                    if (stepped)
-                    {
-                        remainingDirection = velocity.normalized;
-                        remainingMagnitude = velocity.magnitude * deltaTime;
-                    }
+                    ResolveSlide(hit, report, ref velocity, ref remainingMagnitude, ref remainingDirection,
+                        ref sweepState, ref previousHitStable, ref previousVelocity, ref previousObstructionNormal);
                 }
 
-                // 处理坡体、墙体
-                if (!stepped)
-                {
-                    // 获取障碍物法线
-                    var obstructionNormal = GetObstructionNormal(hit.normal, report.IsStable);
-                    // 外部回调
-                    context.Owner.Controller?.OnMovementHit(hit.collider, hit.normal, hit.point, ref report);
-                    
-                    // 可能要处理刚体碰撞
-                    if (hit.collider is not null && hit.collider.attachedRigidbody is not null)
-                    {
-                        rigidbodySolver.StoreHit(hit.collider.attachedRigidbody, velocity, hit.point, obstructionNormal);
-                    }
-
-                    // 处理速度投影 将剩余速度投影到障碍物切线方向实现沿墙滑
-                    bool stableOnHit = report.IsStable && !context.Owner.MustUnground();
-                    Vector3 velocityBeforeProjection = velocity;
-                    HandleVelocityProjection(stableOnHit,
-                                             hit.normal,
-                                             ref sweepState,
-                                             previousHitStable,
-                                             previousVelocity,
-                                             previousObstructionNormal,
-                                             ref velocity,
-                                             ref remainingMagnitude,
-                                             ref remainingDirection);
-
-                    // 更新上一次扫略的稳定状态、速度、障碍物法线
-                    previousHitStable = stableOnHit;
-                    previousVelocity = velocityBeforeProjection;
-                    previousObstructionNormal = obstructionNormal;
-                }
-
-                // 迭代次数累加
+                // 4 迭代上限保护
                 sweeps++;
-                // 如果迭代次数超过最大迭代次数 则直接设置剩余距离为0
                 if (sweeps > context.Config.maxMovementIterations)
                 {
                     completed = false;
@@ -213,6 +160,7 @@ namespace MotionCharacterController
                     {
                         remainingMagnitude = 0f;
                     }
+
                     if (context.Config.killVelocityWhenExceedMaxMovementIterations)
                     {
                         velocity = Vector3.zero;
@@ -220,11 +168,177 @@ namespace MotionCharacterController
                 }
             }
 
-            // 累计剩余距离
             movedPosition += remainingDirection * remainingMagnitude;
-            // 更新位置
             context.TransientPosition = movedPosition;
+            context.DebugLastSweepState = sweepState;
+            context.DebugLastMovementSweeps = sweeps;
+            context.DebugLastMoveCompleted = completed;
             return completed;
+        }
+
+        /// <summary>
+        /// 探测下一次移动命中 优先起步重叠 否则扫掠
+        /// </summary>
+        private bool TryFindNextMovementHit(Vector3 position, Vector3 direction, float remainingMagnitude, out MovementHit hit)
+        {
+            if (context.Config.checkMovementInitialOverlaps
+                && TryGetMostObstructingOverlapHit(position, direction, out hit))
+            {
+                return true;
+            }
+
+            if (CharacterCollisionsSweep(position,
+                                         context.TransientRotation,
+                                         direction,
+                                         remainingMagnitude + MccConfig.COLLISION_OFFSET,
+                                         out RaycastHit sweepHit,
+                                         context.InternalHits) > 0)
+            {
+                hit = new MovementHit
+                {
+                    Collider = sweepHit.collider,
+                    Normal = sweepHit.normal,
+                    Point = sweepHit.point,
+                    Distance = sweepHit.distance,
+                };
+                return true;
+            }
+
+            hit = default;
+            return false;
+        }
+
+        /// <summary>
+        /// 查找与剩余移动方向最对撞的起步重叠
+        /// </summary>
+        private bool TryGetMostObstructingOverlapHit(Vector3 position, Vector3 remainingDirection, out MovementHit hit)
+        {
+            hit = default;
+            int overlapCount = CharacterCollisionsOverlap(position, context.TransientRotation, context.InternalColliders);
+            if (overlapCount <= 0)
+            {
+                return false;
+            }
+
+            float mostObstructingDot = 2f;
+            bool found = false;
+            for (int i = 0; i < overlapCount; i++)
+            {
+                Collider other = context.InternalColliders[i];
+                if (!context.IsColliderValidForCollisions(other))
+                {
+                    continue;
+                }
+
+                if (!Physics.ComputePenetration(
+                        context.Capsule,
+                        position,
+                        context.TransientRotation,
+                        other,
+                        other.transform.position,
+                        other.transform.rotation,
+                        out Vector3 resolutionDirection,
+                        out float resolutionDistance))
+                {
+                    continue;
+                }
+
+                float dotProduct = Vector3.Dot(remainingDirection, resolutionDirection);
+                if (dotProduct >= 0f || dotProduct >= mostObstructingDot)
+                {
+                    continue;
+                }
+
+                mostObstructingDot = dotProduct;
+                hit = new MovementHit
+                {
+                    Collider = other,
+                    Normal = resolutionDirection,
+                    Point = position + (context.TransientRotation * context.TransformToCapsuleCenter) + resolutionDirection * resolutionDistance,
+                    Distance = 0f,
+                };
+                found = true;
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// 尝试把不稳定命中解释成上台阶
+        /// </summary>
+        private bool TryResolveStep(
+            ref Vector3 movedPosition,
+            ref Vector3 velocity,
+            ref Vector3 remainingDirection,
+            ref float remainingMagnitude,
+            float deltaTime,
+            Vector3 hitNormal,
+            HitStabilityReport report)
+        {
+            if (!context.SolveGrounding
+                || context.Config.stepHandling == StepHandlingMethod.None
+                || !report.ValidStepDetected)
+            {
+                return false;
+            }
+
+            if (!stepSolver.TryStep(this, ref movedPosition, ref velocity, hitNormal, report))
+            {
+                return false;
+            }
+
+            remainingDirection = velocity.normalized;
+            remainingMagnitude = velocity.magnitude * deltaTime;
+            return true;
+        }
+
+        /// <summary>
+        /// 沿障碍物投影滑动
+        /// </summary>
+        private void ResolveSlide(
+            MovementHit hit,
+            HitStabilityReport report,
+            ref Vector3 velocity,
+            ref float remainingMagnitude,
+            ref Vector3 remainingDirection,
+            ref MovementSweepState sweepState,
+            ref bool previousHitStable,
+            ref Vector3 previousVelocity,
+            ref Vector3 previousObstructionNormal)
+        {
+            Vector3 obstructionNormal = GetObstructionNormal(hit.Normal, report.IsStable);
+            context.Owner.Controller?.OnMovementHit(hit.Collider, hit.Normal, hit.Point, ref report);
+
+            if (hit.Collider is not null && hit.Collider.attachedRigidbody is not null)
+            {
+                rigidbodySolver.StoreHit(hit.Collider.attachedRigidbody, velocity, hit.Point, obstructionNormal);
+            }
+
+            bool stableOnHit = report.IsStable && !context.Owner.MustUnground();
+            Vector3 velocityBeforeProjection = velocity;
+            HandleVelocityProjection(stableOnHit,
+                                     hit.Normal,
+                                     ref sweepState,
+                                     previousHitStable,
+                                     previousVelocity,
+                                     previousObstructionNormal,
+                                     ref velocity,
+                                     ref remainingMagnitude,
+                                     ref remainingDirection);
+
+            previousHitStable = stableOnHit;
+            previousVelocity = velocityBeforeProjection;
+            previousObstructionNormal = obstructionNormal;
+        }
+
+        /// <summary>
+        /// 写入本帧调试命中信息
+        /// </summary>
+        private void WriteDebugHit(MovementHit hit)
+        {
+            context.DebugHasMovementHit = true;
+            context.DebugLastHitPoint = hit.Point;
+            context.DebugLastHitNormal = hit.Normal;
         }
 
         /// <summary>
