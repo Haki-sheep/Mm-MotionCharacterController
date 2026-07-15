@@ -120,11 +120,26 @@ public class PlayerController : MonoBehaviour, IMcc
 
     public void UpdateRotation(ref Quaternion currentRotation, float deltaTime)
     {
-        if (moveInput.sqrMagnitude < 0.0001f)
-            return;
+        Vector3 lookDirection = moveInput;
+        // 第一人称时角色朝向跟随相机水平朝向
+        if (characterCamera != null && characterCamera.IsFirstPerson)
+        {
+            lookDirection = Vector3.ProjectOnPlane(characterCamera.PlanarDirection, Vector3.up);
+        }
 
-        Quaternion target = Quaternion.LookRotation(moveInput, Vector3.up);
+        if (lookDirection.sqrMagnitude < 0.0001f)
+        {
+            return;
+        }
+
+        Quaternion target = Quaternion.LookRotation(lookDirection, Vector3.up);
         float rotationSpeed = motion != null ? motion.Config.rotationSpeed : 10f;
+        // 第一人称转向更跟手
+        if (characterCamera != null && characterCamera.IsFirstPerson)
+        {
+            rotationSpeed *= 3f;
+        }
+
         currentRotation = Quaternion.Slerp(currentRotation, target, deltaTime * rotationSpeed);
     }
 

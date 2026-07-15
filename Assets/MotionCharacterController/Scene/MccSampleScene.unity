@@ -13319,6 +13319,9 @@ MonoBehaviour:
   MaxDistance: 10
   DistanceMovementSpeed: 5
   DistanceMovementSharpness: 10
+  ToggleRightMouseForFirstPerson: 1
+  FirstPersonMount: {fileID: 636554874}
+  FirstPersonLocalOffset: {x: 0, y: 1.6, z: 0}
   InvertX: 0
   InvertY: 0
   DefaultVerticalAngle: 20
@@ -13899,6 +13902,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 633037889}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &636554873
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 636554874}
+  m_Layer: 6
+  m_Name: FirstPos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &636554874
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 636554873}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.8, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1458356703}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &638016199
 GameObject:
   m_ObjectHideFlags: 0
@@ -32951,6 +32985,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2018937320}
+  - {fileID: 636554874}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &1458356704
@@ -32993,11 +33028,11 @@ MonoBehaviour:
     capsuleRadius: 0.5
     capsuleYOffset: 0
     capsulePhysicsMaterial: {fileID: 0}
-    moveSpeed: 10
+    moveSpeed: 8
     rotationSpeed: 10
     stableMovementSharpness: 15
-    AirAcceleration: 30
-    maxAirMoveSpeed: 10
+    AirAcceleration: 25
+    maxAirMoveSpeed: 6.5
     jumpSpeed: 10
     gravity: -30
     airDrag: 0
