@@ -158,10 +158,8 @@ namespace MotionCharacterController
                                    && context.IsStableOnNormal(outerHit.normal);
                 // 角色头顶有足够空间
                 bool clearAbove = queries.CharacterCollisionsSweep(characterPosition, characterRotation, up, context.Config.maxStepHeight - farthestHit.distance, out _, context.InternalHits) <= 0;
-                // 台阶内侧或原位置地面稳定
-                bool stableInner = context.Config.allowSteppingWithoutStableGrounding
-                                   || queries.CharacterCollisionsRaycast(characterPosition + Vector3.Project(candidatePosition - characterPosition, up), -up, context.Config.maxStepHeight, out RaycastHit innerHit, context.InternalHits, true) > 0
-                                   && context.IsStableOnNormal(innerHit.normal);
+                // 内侧稳定 先测脚下抬高点 失败再测台阶内侧点 与 KCC 一致
+                bool stableInner = IsInnerStepGroundValid(queries, characterPosition, candidatePosition, farthestHit.point, innerHitDirection, up);
 
                 // 四项都满足 则认定为有效台阶
                 if (clearAtStep && stableOuter && clearAbove && stableInner)
@@ -179,6 +177,36 @@ namespace MotionCharacterController
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 判断台阶内侧是否有可站立地面
+        /// </summary>
+        private bool IsInnerStepGroundValid(
+            CollisionSolver queries,
+            Vector3 characterPosition,
+            Vector3 candidatePosition,
+            Vector3 stepHitPoint,
+            Vector3 innerHitDirection,
+            Vector3 up)
+        {
+            if (context.Config.allowSteppingWithoutStableGrounding)
+            {
+                return true;
+            }
+
+            // 第一枪 从角色位置抬到候选高度向下打
+            Vector3 elevatedCharacterPosition = characterPosition + Vector3.Project(candidatePosition - characterPosition, up);
+            if (queries.CharacterCollisionsRaycast(elevatedCharacterPosition, -up, context.Config.maxStepHeight, out RaycastHit innerHit, context.InternalHits, true) > 0
+                && context.IsStableOnNormal(innerHit.normal))
+            {
+                return true;
+            }
+
+            // 第二枪 从台阶命中点再往内侧偏一点向下打 KCC 有 MCC 原先漏了
+            Vector3 innerProbeOrigin = stepHitPoint + innerHitDirection * MccConfig.SECONDARY_PROBES_HORIZONTAL;
+            return queries.CharacterCollisionsRaycast(innerProbeOrigin, -up, context.Config.maxStepHeight, out innerHit, context.InternalHits, true) > 0
+                   && context.IsStableOnNormal(innerHit.normal);
         }
     }
 }

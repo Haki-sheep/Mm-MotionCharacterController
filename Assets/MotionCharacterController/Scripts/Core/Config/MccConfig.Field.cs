@@ -15,18 +15,23 @@ namespace MotionCharacterController
 
         [Header("示例移动")]
         [Tooltip("示例 PlayerController 地面目标速度")]
-        public float moveSpeed = 6f;
+        public float moveSpeed = 10f;
         [Tooltip("示例 PlayerController 转向速度")]
         public float rotationSpeed = 10f;
         [Tooltip("示例 PlayerController 地面速度插值锐度")]
         public float stableMovementSharpness = 15f;
         [Tooltip("示例 PlayerController 空中加速")]
-        public float AirAcceleration = 15f;
+        public float AirAcceleration = 30f;
+        [Tooltip("示例 PlayerController 空中水平速度上限")]
+        public float maxAirMoveSpeed = 10f;
 
         [Header("跳跃和重力")]
-        public float jumpSpeed = 8f;
-        public float gravity = -25f;
-        public float airDrag = 0.1f;
+        [Tooltip("起跳向上速度 对齐 KCC JumpUpSpeed")]
+        public float jumpSpeed = 10f;
+        [Tooltip("重力加速度 对齐 KCC Gravity.y=-30")]
+        public float gravity = -30f;
+        [Tooltip("空中阻力 0 更接近 KCC 示例 Drag=0")]
+        public float airDrag = 0f;
 
         [Header("地面")]
         [Tooltip("角色能稳定站住的最大坡度角比如 60 表示小于等于 60 度的斜坡都算地面")]

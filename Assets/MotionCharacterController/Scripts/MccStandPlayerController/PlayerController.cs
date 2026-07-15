@@ -80,8 +80,9 @@ public class PlayerController : MonoBehaviour, IMcc
 
             if (jumpRequested)
             {
-                currentVelocity += up * config.jumpSpeed;
+                // 对齐 KCC 先清竖直分量再施加跳跃 并强制离地
                 motion.ForceUnground();
+                currentVelocity += (up * config.jumpSpeed) - Vector3.Project(currentVelocity, up);
                 jumpRequested = false;
                 motion.ConsumeJumpRequest();
             }
@@ -93,8 +94,18 @@ public class PlayerController : MonoBehaviour, IMcc
         {
             Vector3 addedVelocity = input * config.AirAcceleration * deltaTime;
             Vector3 currentPlanarVelocity = Vector3.ProjectOnPlane(currentVelocity, up);
-            Vector3 targetPlanarVelocity = Vector3.ClampMagnitude(currentPlanarVelocity + addedVelocity, config.moveSpeed);
-            currentVelocity = targetPlanarVelocity + Vector3.Project(currentVelocity, up);
+            float airSpeedLimit = config.maxAirMoveSpeed;
+            if (currentPlanarVelocity.magnitude < airSpeedLimit)
+            {
+                Vector3 newTotal = Vector3.ClampMagnitude(currentPlanarVelocity + addedVelocity, airSpeedLimit);
+                addedVelocity = newTotal - currentPlanarVelocity;
+            }
+            else if (Vector3.Dot(currentPlanarVelocity, addedVelocity) > 0f)
+            {
+                addedVelocity = Vector3.ProjectOnPlane(addedVelocity, currentPlanarVelocity.normalized);
+            }
+
+            currentVelocity += addedVelocity;
         }
 
         currentVelocity += up * config.gravity * deltaTime;

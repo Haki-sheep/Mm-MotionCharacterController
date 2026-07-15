@@ -70,17 +70,30 @@ namespace MotionCharacterController
         {
             ValidateData();
             InitializeSolvers();
+            SyncTransientFromTransform();
             controller = GetComponent<IMcc>();
         }
 
         private void OnEnable()
         {
+            SyncTransientFromTransform();
             MccSystem.RegisterCharacter(this);
         }
 
         private void OnDisable()
         {
             MccSystem.UnregisterCharacter(this);
+        }
+
+        /// <summary>
+        /// 用场景 Transform 初始化瞬时位姿 避免首帧 PreSimulation 用默认值把人拽走
+        /// </summary>
+        private void SyncTransientFromTransform()
+        {
+            context.TransientPosition = transform.position;
+            context.TransientRotation = transform.rotation;
+            context.InitialTickPosition = context.TransientPosition;
+            context.InitialTickRotation = context.TransientRotation;
         }
 
         private void Update()
