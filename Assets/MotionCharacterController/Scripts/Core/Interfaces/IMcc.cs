@@ -85,7 +85,12 @@ namespace MotionCharacterController
         /// <param name="atCharacterPosition">角色位置</param>
         /// <param name="atCharacterRotation">角色旋转</param>
         /// <param name="hitStabilityReport">稳定性报告</param>
-        void ProcessHitStabilityReport(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport);
+        void ProcessHitStabilityReport(Collider hitCollider,
+                                       Vector3 hitNormal,
+                                       Vector3 hitPoint,
+                                       Vector3 atCharacterPosition,
+                                       Quaternion atCharacterRotation,
+                                       ref HitStabilityReport hitStabilityReport);
 
         /// <summary> 
         /// 离散碰撞事件

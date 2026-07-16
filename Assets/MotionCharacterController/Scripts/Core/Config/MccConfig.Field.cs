@@ -106,7 +106,7 @@ namespace MotionCharacterController
         public int maxDecollisionIterations = 1;
         [Tooltip("移动迭代内是否先检查起步重叠 开启后更不容易穿模")]
         public bool checkMovementInitialOverlaps = true;
-        [Tooltip("超过最大移动迭代次数时是否清空速度开启能避免角色在复杂墙角里疯狂抖动")]
+        [Tooltip("超过最大移动迭代次数时是否清空速度,开启能避免角色在复杂墙角里疯狂抖动")]
         public bool killVelocityWhenExceedMaxMovementIterations = true;
         [Tooltip("超过最大移动迭代次数时是否丢弃剩余位移开启能避免角色被挤进墙里")]
         public bool killRemainingMovementWhenExceedMaxMovementIterations = true;

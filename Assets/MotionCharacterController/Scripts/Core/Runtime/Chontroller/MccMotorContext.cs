@@ -142,7 +142,12 @@ namespace MotionCharacterController
             InitialSimulationRotation = TransientRotation;
             OverlapsCount = 0;
             LastGroundingStatus.CopyFrom(GroundingStatus);
-            GroundingStatus = new CharacterGroundingReport { GroundNormal = CharacterUp, InnerGroundNormal = CharacterUp, OuterGroundNormal = CharacterUp };
+
+            GroundingStatus = new CharacterGroundingReport
+             { GroundNormal = CharacterUp, 
+             InnerGroundNormal = CharacterUp, 
+             OuterGroundNormal = CharacterUp };
+
             DebugHasMovementHit = false;
             DebugLastSweepState = MovementSweepState.Initial;
             DebugLastMovementSweeps = 0;
@@ -205,12 +210,16 @@ namespace MotionCharacterController
         /// </summary>
         public void SanitizeVelocity()
         {
-            if (float.IsNaN(BaseVelocity.x) || float.IsNaN(BaseVelocity.y) || float.IsNaN(BaseVelocity.z))
+            if (float.IsNaN(BaseVelocity.x) 
+                || float.IsNaN(BaseVelocity.y) 
+                || float.IsNaN(BaseVelocity.z))
             {
                 BaseVelocity = Vector3.zero;
             }
 
-            if (float.IsNaN(AttachedRigidbodyVelocity.x) || float.IsNaN(AttachedRigidbodyVelocity.y) || float.IsNaN(AttachedRigidbodyVelocity.z))
+            if (float.IsNaN(AttachedRigidbodyVelocity.x) 
+                || float.IsNaN(AttachedRigidbodyVelocity.y) 
+                || float.IsNaN(AttachedRigidbodyVelocity.z))
             {
                 AttachedRigidbodyVelocity = Vector3.zero;
             }

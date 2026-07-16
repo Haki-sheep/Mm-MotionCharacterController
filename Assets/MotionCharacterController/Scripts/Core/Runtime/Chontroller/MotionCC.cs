@@ -165,24 +165,29 @@ namespace MotionCharacterController
             controller?.UpdateRotation(ref rotation, deltaTime);
             context.TransientRotation = rotation.normalized;
 
+            // 如果移动旋转标记为脏
             if (context.MoveRotationDirty)
             {
                 context.TransientRotation = context.MoveRotationTarget.normalized;
                 context.MoveRotationDirty = false;
             }
 
+            // 如果需要解决移动碰撞
             if (context.SolveMovementCollisions)
             {
                 collisionSolver.ResolveInitialOverlaps();
             }
 
+            // 更新速度
             controller?.UpdateVelocity(ref context.BaseVelocity, deltaTime);
 
+            // 如果速度小于最小速度
             if (context.BaseVelocity.magnitude < MccConfig.MIN_VELOCITY_MAGNITUDE)
             {
                 context.BaseVelocity = Vector3.zero;
             }
 
+            // 如果速度大于0
             if (context.BaseVelocity.sqrMagnitude > 0f)
             {
                 if (context.SolveMovementCollisions)
@@ -195,9 +200,13 @@ namespace MotionCharacterController
                 }
             }
 
+            // 处理速度碰撞
             rigidbodySolver.ProcessVelocityForHits(ref context.BaseVelocity, deltaTime);
+            // 处理离散碰撞事件
             collisionSolver.ProcessDiscreteCollisionEvents();
+            // 角色更新后的收尾阶段
             controller?.AfterCharacterUpdate(deltaTime);
+            // 记录阶段2时间
             context.DebugPhase2Seconds = Time.realtimeSinceStartup - phaseStart;
         }
 
@@ -207,13 +216,17 @@ namespace MotionCharacterController
         /// <param name="interpolate">是否插值</param>
         internal void CommitSimulation(bool interpolate)
         {
+            // 如果需要插值 则设置为初始位置和旋转让后续LateUpdate插值使用
             if (interpolate)
             {
-                context.Transform.SetPositionAndRotation(context.InitialTickPosition, context.InitialTickRotation);
+                context.Transform.SetPositionAndRotation(context.InitialTickPosition,
+                                                         context.InitialTickRotation);
             }
+            // 否则设置为当前位置和旋转
             else
             {
-                context.Transform.SetPositionAndRotation(context.TransientPosition, context.TransientRotation);
+                context.Transform.SetPositionAndRotation(context.TransientPosition,
+                                                         context.TransientRotation);
             }
         }
 
