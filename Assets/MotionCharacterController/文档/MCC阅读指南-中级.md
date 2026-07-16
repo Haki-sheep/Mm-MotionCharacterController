@@ -4,10 +4,15 @@
 
 ## 怎么跳转（重要）
 
-Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
+Cursor 点 Markdown 链接有坑，本文链接已按下面规则写：
 
-1. **可点链接**：相对本文档的路径（不要用 `/Assets` 开头，Windows 会当成 `C:\Assets`）
-2. **保底**：链接文字里已写 `文件名:行号` → 按 `Ctrl+P` 输入文件名 → 打开后 `Ctrl+G` 输入行号
+1. 路径必须是**工作区相对**：`Assets/MotionCharacterController/Scripts/...`  
+   - 不要 `../`（编辑区会相对工程根解析，链到工程外 → 找不到文件）  
+   - 不要前导 `/`（Windows 会当成 `C:\Assets\...`）
+2. **点链接只能可靠打开文件，不能可靠跳行**  
+   - `#L行号` 在 Cursor 里经常直接报「找不到文件」  
+   - 行号写在链接文字里（如 `MotionCC.cs:250`），打开后按 `Ctrl+G` 输入行号
+3. 最稳流程：`Ctrl+P` 搜文件名 → `Ctrl+G` 跳行
 
 单角色本地内核够用时，可先不看后三章。
 
@@ -32,7 +37,7 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 | | E3 | 网络同步 | ★6 | 状态袋 / 谁权威 / 回滚 |
 
 内核主序：Phase1 解重叠+接地 → Phase2 旋转+速度+Move。  
-整帧入口：[MccSystem.cs:55 Simulate](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
+整帧入口：[MccSystem.cs:55 Simulate](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
 
 ---
 
@@ -45,12 +50,12 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 定尺寸：[MccConfig.Field.cs:10](../Scripts/Core/Config/MccConfig.Field.cs) → [MotionCC.cs:250 ValidateData](../Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [MotionCC.Function.cs:149 SetCapsuleDimensions](../Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs)
-- 端点缓存：[MccMotorContext.cs:155 RefreshCapsuleData](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) / [MccMotorContext.cs:289 GetCapsuleBottomHemiAt](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
-- 安全距：[MccConfig.Constant.cs:10 COLLISION_OFFSET](../Scripts/Core/Config/MccConfig.Constant.cs) / [MccConfig.Constant.cs:16 GROUND_BACKSTEP](../Scripts/Core/Config/MccConfig.Constant.cs)
-- 层掩码：[MccMotorContext.cs:182 RefreshCollidableLayers](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
-- 查询：[CollisionSolver.cs:372 Overlap](../Scripts/Core/Solvers/CollisionSolver.cs) / [CollisionSolver.cs:411 Sweep](../Scripts/Core/Solvers/CollisionSolver.cs)  
-  地面：[GroundSolver.cs:148 CharacterGroundSweep](../Scripts/Core/Solvers/GroundSolver.cs)
+- 定尺寸：[MccConfig.Field.cs:10](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs) → [MotionCC.cs:250 ValidateData](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [MotionCC.Function.cs:149 SetCapsuleDimensions](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs)
+- 端点缓存：[MccMotorContext.cs:155 RefreshCapsuleData](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) / [MccMotorContext.cs:289 GetCapsuleBottomHemiAt](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- 安全距：[MccConfig.Constant.cs:10 COLLISION_OFFSET](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Constant.cs) / [MccConfig.Constant.cs:16 GROUND_BACKSTEP](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Constant.cs)
+- 层掩码：[MccMotorContext.cs:182 RefreshCollidableLayers](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- 查询：[CollisionSolver.cs:372 Overlap](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs) / [CollisionSolver.cs:411 Sweep](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)  
+  地面：[GroundSolver.cs:148 CharacterGroundSweep](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs)
 
 ---
 
@@ -61,11 +66,11 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 字段：[MccMotorContext.cs:21 TransientPosition](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) / [MccMotorContext.cs:27 TransientRotation](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
-- 帧初：[MccMotorContext.cs:137 BeginSimulation](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
-- 插值起点：[MotionCC.cs:109 PreSimulationTick](../Scripts/Core/Runtime/Chontroller/MotionCC.cs)
-- Solver 只写 Transient：[CollisionSolver.cs:171 Move 末尾](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 提交：[MotionCC.cs:208 CommitSimulation](../Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [MotionCC.cs:224 InterpolationUpdate](../Scripts/Core/Runtime/Chontroller/MotionCC.cs)
+- 字段：[MccMotorContext.cs:21 TransientPosition](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) / [MccMotorContext.cs:27 TransientRotation](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- 帧初：[MccMotorContext.cs:137 BeginSimulation](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- 插值起点：[MotionCC.cs:109 PreSimulationTick](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs)
+- Solver 只写 Transient：[CollisionSolver.cs:171 Move 末尾](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 提交：[MotionCC.cs:208 CommitSimulation](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [MotionCC.cs:224 InterpolationUpdate](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs)
 
 ---
 
@@ -76,11 +81,11 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- [MccMotorContext.cs:202 SanitizeVelocity](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
-- 微速度归零：[MotionCC.cs:181 MIN_VELOCITY](../Scripts/Core/Runtime/Chontroller/MotionCC.cs)
-- 超迭代兜底：[CollisionSolver.cs:156](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 平面约束：[CollisionSolver.cs:96 hasPlanarConstraint](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 调试字段：[MccMotorContext.cs:110 Debug*](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- [MccMotorContext.cs:202 SanitizeVelocity](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- 微速度归零：[MotionCC.cs:181 MIN_VELOCITY](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs)
+- 超迭代兜底：[CollisionSolver.cs:156](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 平面约束：[CollisionSolver.cs:96 hasPlanarConstraint](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 调试字段：[MccMotorContext.cs:110 Debug*](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
 
 ---
 
@@ -91,12 +96,12 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 接口：[IMcc.cs:37 UpdateVelocity](../Scripts/Core/Interfaces/IMcc.cs) / [IMcc.cs:30 UpdateRotation](../Scripts/Core/Interfaces/IMcc.cs)
-- 调用：[MotionCC.cs:165 UpdatePhase2](../Scripts/Core/Runtime/Chontroller/MotionCC.cs)
-- 示例：[PlayerController.cs:49 UpdateVelocity](../Scripts/MccStandPlayerController/PlayerController.cs)  
-  跳：[PlayerController.cs:84](../Scripts/MccStandPlayerController/PlayerController.cs) → [MotionCC.Function.cs:56 ForceUnground](../Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs)
-- 输入：[MotionCC.cs:99 Update](../Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [PlayerController.cs:24 InputVectorUpdate](../Scripts/MccStandPlayerController/PlayerController.cs)
-- 参数：[MccConfig.Field.cs:16 移动跳跃](../Scripts/Core/Config/MccConfig.Field.cs)
+- 接口：[IMcc.cs:37 UpdateVelocity](Assets/MotionCharacterController/Scripts/Core/Interfaces/IMcc.cs) / [IMcc.cs:30 UpdateRotation](Assets/MotionCharacterController/Scripts/Core/Interfaces/IMcc.cs)
+- 调用：[MotionCC.cs:165 UpdatePhase2](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs)
+- 示例：[PlayerController.cs:49 UpdateVelocity](Assets/MotionCharacterController/Scripts/MccStandPlayerController/PlayerController.cs)  
+  跳：[PlayerController.cs:84](Assets/MotionCharacterController/Scripts/MccStandPlayerController/PlayerController.cs) → [MotionCC.Function.cs:56 ForceUnground](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs)
+- 输入：[MotionCC.cs:99 Update](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [PlayerController.cs:24 InputVectorUpdate](Assets/MotionCharacterController/Scripts/MccStandPlayerController/PlayerController.cs)
+- 参数：[MccConfig.Field.cs:16 移动跳跃](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs)
 
 ---
 
@@ -107,10 +112,10 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 名单：[IMcc.cs](../Scripts/Core/Interfaces/IMcc.cs)
-- 过滤：[MccMotorContext.cs:231 IsColliderValid](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) → [IMcc.cs:59](../Scripts/Core/Interfaces/IMcc.cs)
-- 回调：[GroundSolver.cs:124 OnGroundHit](../Scripts/Core/Solvers/GroundSolver.cs) / [CollisionSolver.cs:310 OnMovementHit](../Scripts/Core/Solvers/CollisionSolver.cs) / [CollisionSolver.cs:347 Discrete](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 稳定性最后一票：[HitStabilityEvaluator.cs:74](../Scripts/Core/Solvers/HitStabilityEvaluator.cs)
+- 名单：[IMcc.cs](Assets/MotionCharacterController/Scripts/Core/Interfaces/IMcc.cs)
+- 过滤：[MccMotorContext.cs:231 IsColliderValid](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) → [IMcc.cs:59](Assets/MotionCharacterController/Scripts/Core/Interfaces/IMcc.cs)
+- 回调：[GroundSolver.cs:124 OnGroundHit](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs) / [CollisionSolver.cs:310 OnMovementHit](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs) / [CollisionSolver.cs:347 Discrete](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 稳定性最后一票：[HitStabilityEvaluator.cs:74](Assets/MotionCharacterController/Scripts/Core/Solvers/HitStabilityEvaluator.cs)
 
 ---
 
@@ -121,14 +126,14 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 入口：[MotionCC.cs:149](../Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [GroundSolver.cs:25 UpdateGrounding](../Scripts/Core/Solvers/GroundSolver.cs)
-- 强制离地抬高：[GroundSolver.cs:34](../Scripts/Core/Solvers/GroundSolver.cs)
-- 探测距：[GroundSolver.cs:179 GetSelectedGroundProbeDistance](../Scripts/Core/Solvers/GroundSolver.cs)
-- 向下扫吸附：[GroundSolver.cs:75 ProbeGround](../Scripts/Core/Solvers/GroundSolver.cs)
-- 坡度：[MccMotorContext.cs:221 IsStableOnNormal](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) / [MccConfig.Field.cs:38](../Scripts/Core/Config/MccConfig.Field.cs)
-- 边缘禁吸：[LedgeSolver.cs:95](../Scripts/Core/Solvers/LedgeSolver.cs)（细节见 K8）
-- 落地刹竖直：[GroundSolver.cs:52](../Scripts/Core/Solvers/GroundSolver.cs)
-- 报告：[MccTypes.cs:78 CharacterGroundingReport](../Scripts/Core/Runtime/Chontroller/MccTypes.cs)
+- 入口：[MotionCC.cs:149](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs) → [GroundSolver.cs:25 UpdateGrounding](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs)
+- 强制离地抬高：[GroundSolver.cs:34](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs)
+- 探测距：[GroundSolver.cs:179 GetSelectedGroundProbeDistance](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs)
+- 向下扫吸附：[GroundSolver.cs:75 ProbeGround](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs)
+- 坡度：[MccMotorContext.cs:221 IsStableOnNormal](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs) / [MccConfig.Field.cs:38](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs)
+- 边缘禁吸：[LedgeSolver.cs:95](Assets/MotionCharacterController/Scripts/Core/Solvers/LedgeSolver.cs)（细节见 K8）
+- 落地刹竖直：[GroundSolver.cs:52](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs)
+- 报告：[MccTypes.cs:78 CharacterGroundingReport](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccTypes.cs)
 
 ---
 
@@ -139,13 +144,13 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 调用：[MotionCC.cs:190 → Move](../Scripts/Core/Runtime/Chontroller/MotionCC.cs)
-- 主循环：[CollisionSolver.cs:89 Move](../Scripts/Core/Solvers/CollisionSolver.cs)  
-  → [CollisionSolver.cs:182 TryFindNextMovementHit](../Scripts/Core/Solvers/CollisionSolver.cs) → 上台阶或滑动 → 超迭代兜底
-- 解重叠：[CollisionSolver.cs:31 ResolveInitialOverlaps](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 障碍法线：[CollisionSolver.cs:480 GetObstructionNormal](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 投影：[CollisionSolver.cs:624 ProjectVelocity](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 配置：[MccConfig.Field.cs:85 求解安全](../Scripts/Core/Config/MccConfig.Field.cs)
+- 调用：[MotionCC.cs:190 → Move](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs)
+- 主循环：[CollisionSolver.cs:89 Move](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)  
+  → [CollisionSolver.cs:182 TryFindNextMovementHit](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs) → 上台阶或滑动 → 超迭代兜底
+- 解重叠：[CollisionSolver.cs:31 ResolveInitialOverlaps](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 障碍法线：[CollisionSolver.cs:480 GetObstructionNormal](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 投影：[CollisionSolver.cs:624 ProjectVelocity](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 配置：[MccConfig.Field.cs:85 求解安全](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs)
 
 ---
 
@@ -156,12 +161,12 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 共用入口：[HitStabilityEvaluator.cs:24 Evaluate](../Scripts/Core/Solvers/HitStabilityEvaluator.cs)
-- 边缘：[LedgeSolver.cs:21 ProcessLedgeStability](../Scripts/Core/Solvers/LedgeSolver.cs) / [LedgeSolver.cs:95](../Scripts/Core/Solvers/LedgeSolver.cs)
-- 台阶探测：[StepSolver.cs:26 DetectSteps](../Scripts/Core/Solvers/StepSolver.cs)（仅不稳定）
-- 抬脚：[CollisionSolver.cs:269 TryResolveStep](../Scripts/Core/Solvers/CollisionSolver.cs) → [StepSolver.cs:84 TryStep](../Scripts/Core/Solvers/StepSolver.cs)
-- 调用方：接地 [GroundSolver.cs:95](../Scripts/Core/Solvers/GroundSolver.cs) / 移动 [CollisionSolver.cs:137](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 配置：[MccConfig.Field.cs:48 台阶](../Scripts/Core/Config/MccConfig.Field.cs) / [MccConfig.Field.cs:58 边缘](../Scripts/Core/Config/MccConfig.Field.cs)
+- 共用入口：[HitStabilityEvaluator.cs:24 Evaluate](Assets/MotionCharacterController/Scripts/Core/Solvers/HitStabilityEvaluator.cs)
+- 边缘：[LedgeSolver.cs:21 ProcessLedgeStability](Assets/MotionCharacterController/Scripts/Core/Solvers/LedgeSolver.cs) / [LedgeSolver.cs:95](Assets/MotionCharacterController/Scripts/Core/Solvers/LedgeSolver.cs)
+- 台阶探测：[StepSolver.cs:26 DetectSteps](Assets/MotionCharacterController/Scripts/Core/Solvers/StepSolver.cs)（仅不稳定）
+- 抬脚：[CollisionSolver.cs:269 TryResolveStep](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs) → [StepSolver.cs:84 TryStep](Assets/MotionCharacterController/Scripts/Core/Solvers/StepSolver.cs)
+- 调用方：接地 [GroundSolver.cs:95](Assets/MotionCharacterController/Scripts/Core/Solvers/GroundSolver.cs) / 移动 [CollisionSolver.cs:137](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 配置：[MccConfig.Field.cs:48 台阶](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs) / [MccConfig.Field.cs:58 边缘](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs)
 
 ---
 
@@ -172,10 +177,10 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 状态：[MccTypes.cs:38 MovementSweepState](../Scripts/Core/Runtime/Chontroller/MccTypes.cs)
-- 状态机：[CollisionSolver.cs:559 HandleVelocityProjection](../Scripts/Core/Solvers/CollisionSolver.cs)  
-  → [CollisionSolver.cs:668 EvaluateCrease](../Scripts/Core/Solvers/CollisionSolver.cs)
-- 调试：[MccMotorContext.cs:112 DebugLastSweepState](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)，菜单 `Tools/MCC/调试器`
+- 状态：[MccTypes.cs:38 MovementSweepState](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccTypes.cs)
+- 状态机：[CollisionSolver.cs:559 HandleVelocityProjection](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)  
+  → [CollisionSolver.cs:668 EvaluateCrease](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs)
+- 调试：[MccMotorContext.cs:112 DebugLastSweepState](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)，菜单 `Tools/MCC/调试器`
 
 到这里，**单角色本地「走得稳」的内核主链就齐了**。
 
@@ -188,11 +193,11 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 配置：[MccConfig.Field.cs:72 InteractionType](../Scripts/Core/Config/MccConfig.Field.cs) / [MccConfig.Field.cs:75 Mass](../Scripts/Core/Config/MccConfig.Field.cs)
-- 滑动记账：[CollisionSolver.cs:312](../Scripts/Core/Solvers/CollisionSolver.cs) → [RigidbodySolver.cs:36 StoreHit](../Scripts/Core/Solvers/RigidbodySolver.cs)
-- 帧末：[RigidbodySolver.cs:58 ProcessVelocityForHits](../Scripts/Core/Solvers/RigidbodySolver.cs) / [RigidbodySolver.cs:100 ResolveMassRatio](../Scripts/Core/Solvers/RigidbodySolver.cs)
-- 清空：[MotionCC.cs:126 Clear](../Scripts/Core/Runtime/Chontroller/MotionCC.cs)
-- Kinematic 过滤：[MccMotorContext.cs:248](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- 配置：[MccConfig.Field.cs:72 InteractionType](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs) / [MccConfig.Field.cs:75 Mass](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs)
+- 滑动记账：[CollisionSolver.cs:312](Assets/MotionCharacterController/Scripts/Core/Solvers/CollisionSolver.cs) → [RigidbodySolver.cs:36 StoreHit](Assets/MotionCharacterController/Scripts/Core/Solvers/RigidbodySolver.cs)
+- 帧末：[RigidbodySolver.cs:58 ProcessVelocityForHits](Assets/MotionCharacterController/Scripts/Core/Solvers/RigidbodySolver.cs) / [RigidbodySolver.cs:100 ResolveMassRatio](Assets/MotionCharacterController/Scripts/Core/Solvers/RigidbodySolver.cs)
+- 清空：[MotionCC.cs:126 Clear](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.cs)
+- Kinematic 过滤：[MccMotorContext.cs:248](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
 
 ---
 
@@ -212,12 +217,12 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
   → 角色 Phase2 自己走
 ```
 
-- 平台算速：[MccPhysicsMover.cs:72 VelocityUpdate](../Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs) / [IMover.cs:7](../Scripts/Core/Interfaces/IMover.cs)
-- 附着：[PlatformSolver.cs:28 UpdateAttachment](../Scripts/Core/Solvers/PlatformSolver.cs)  
-  [PlatformSolver.cs:96](../Scripts/Core/Solvers/PlatformSolver.cs) → [PlatformSolver.cs:116](../Scripts/Core/Solvers/PlatformSolver.cs) → [PlatformSolver.cs:71 Move](../Scripts/Core/Solvers/PlatformSolver.cs)
-- 动量：[PlatformSolver.cs:57](../Scripts/Core/Solvers/PlatformSolver.cs)
-- 平台落地：[MccPhysicsMover.cs:107 CommitMovement](../Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs)（夹在 [MccSystem.cs:75](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)）
-- 忽略自身平台：[MccMotorContext.cs:242](../Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
+- 平台算速：[MccPhysicsMover.cs:72 VelocityUpdate](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs) / [IMover.cs:7](Assets/MotionCharacterController/Scripts/Core/Interfaces/IMover.cs)
+- 附着：[PlatformSolver.cs:28 UpdateAttachment](Assets/MotionCharacterController/Scripts/Core/Solvers/PlatformSolver.cs)  
+  [PlatformSolver.cs:96](Assets/MotionCharacterController/Scripts/Core/Solvers/PlatformSolver.cs) → [PlatformSolver.cs:116](Assets/MotionCharacterController/Scripts/Core/Solvers/PlatformSolver.cs) → [PlatformSolver.cs:71 Move](Assets/MotionCharacterController/Scripts/Core/Solvers/PlatformSolver.cs)
+- 动量：[PlatformSolver.cs:57](Assets/MotionCharacterController/Scripts/Core/Solvers/PlatformSolver.cs)
+- 平台落地：[MccPhysicsMover.cs:107 CommitMovement](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs)（夹在 [MccSystem.cs:75](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)）
+- 忽略自身平台：[MccMotorContext.cs:242](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccMotorContext.cs)
 
 依赖 K6 接地 + K7 Move。
 
@@ -232,12 +237,12 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 怎么解决**
 
-- 单入口：[MccSystem.cs:55 Simulate](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)  
+- 单入口：[MccSystem.cs:55 Simulate](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)  
   全员 PreSim → 全平台速度 → 全员 Phase1 → 全平台 Commit → 全员 Phase2 → 全员 Commit
-- 驱动：[MccSystem.cs:27 FixedUpdate](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs) + [MccSystem.cs:14 AutoSimulation](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
-- 注册表：[MccSystem.cs:114 RegisterCharacter](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs) / [MccSystem.cs:139 RegisterMover](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
-- 手动步进：[MccConfig.Field.cs:99 autoSimulation](../Scripts/Core/Config/MccConfig.Field.cs) → [MccSystem.cs:160 Sync](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
-- 插值：[MccSystem.cs:176](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs) / [MccSystem.cs:37 LateUpdate](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
+- 驱动：[MccSystem.cs:27 FixedUpdate](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs) + [MccSystem.cs:14 AutoSimulation](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
+- 注册表：[MccSystem.cs:114 RegisterCharacter](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs) / [MccSystem.cs:139 RegisterMover](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
+- 手动步进：[MccConfig.Field.cs:99 autoSimulation](Assets/MotionCharacterController/Scripts/Core/Config/MccConfig.Field.cs) → [MccSystem.cs:160 Sync](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
+- 插值：[MccSystem.cs:176](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs) / [MccSystem.cs:37 LateUpdate](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
 
 尚未内建角色互推/避让。
 
@@ -252,10 +257,10 @@ Cursor 对 Markdown 链接支持不稳。本文采用两种写法：
 
 **MCC 已具备**
 
-- 角色快照：[MccTypes.cs:59 MotionCharacterMotorState](../Scripts/Core/Runtime/Chontroller/MccTypes.cs)
-- 读写：[MotionCC.Function.cs:19 GetState](../Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs) / [MotionCC.Function.cs:40 ApplyState](../Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs)
-- 平台快照：[MccPhysicsMover.cs:168](../Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs) / [GetState:149](../Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs) / [ApplyState:160](../Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs)
-- 手动 Simulate：[MccSystem.cs:55](../Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
+- 角色快照：[MccTypes.cs:59 MotionCharacterMotorState](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MccTypes.cs)
+- 读写：[MotionCC.Function.cs:19 GetState](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs) / [MotionCC.Function.cs:40 ApplyState](Assets/MotionCharacterController/Scripts/Core/Runtime/Chontroller/MotionCC.Function.cs)
+- 平台快照：[MccPhysicsMover.cs:168](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs) / [GetState:149](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs) / [ApplyState:160](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccPhysicsMover.cs)
+- 手动 Simulate：[MccSystem.cs:55](Assets/MotionCharacterController/Scripts/Core/Runtime/Mover%26System/MccSystem.cs)
 
 **需上层网络层做**
 

@@ -183,13 +183,17 @@ namespace MotionCharacterController
         {
             CollidableLayers = 0;
             // 获取角色Transform的层的Layer
-            int layer = Transform is not null ? Transform.gameObject.layer : LayerMask.NameToLayer("Default");
+            int layer = Transform is not null ?
+                         Transform.gameObject.layer : LayerMask.NameToLayer("Default");
             for (int i = 0; i < 32; i++)
             {
                 // GetIgnoreLayerCollision = 获取层是否忽略层碰撞 
-                // false代表不忽略 取反后或运算添加到CollidableLayers掩码里
+                // false代表不忽略 取反后
                 if (!Physics.GetIgnoreLayerCollision(layer, i))
                 {
+                    // 或运算添加到CollidableLayers掩码里
+                    // 比如CollidableLayers = 0 i=10=>00001010
+                    // 00000 | 00001010 = 00001010 说明Layer10不忽略碰撞
                     CollidableLayers |= 1 << i;
                 }
             }
@@ -238,24 +242,28 @@ namespace MotionCharacterController
             Rigidbody attachedRigidbody = coll.attachedRigidbody;
             if (attachedRigidbody is not null)
             {
-                // 不做下面判断 会导致角色和移动平台打架 或者 不符合角色的刚体交互类型的表现
+                // 不做下面判断 不然会导致角色和移动平台打架 或者 不符合角色的刚体交互类型的表现
                 // 如果角色状态是跟着附着的刚体移动 且 附着的刚体是当前附着的刚体 则不参与碰撞/地面检测
                 if (IsMovingFromAttachedRigidbody && attachedRigidbody == AttachedRigidbody)
                 {
                     return false;
                 }
 
-                // 如果角色刚体状态为运动学 且 附着的刚体不是运动学 不参与碰撞/地面检测
-                if (Config.rigidbodyInteractionType == RigidbodyInteractionType.Kinematic && !attachedRigidbody.isKinematic)
+                // 如果当前角色为运动学 说明是霸体状态 和可推动物品无物理交互(仍然会产生碰撞)
+                // 如果附着的刚体非运动学 则说明其是可推动的 所以MCC应该忽略其碰撞 
+                // 不然就会出现角色和可推动物品打架的情况
+                if (Config.rigidbodyInteractionType == RigidbodyInteractionType.Kinematic 
+                && !attachedRigidbody.isKinematic)
                 {
-                    // 唤醒刚体是为了Unity物理引擎的碰撞检测 Mcc实际上不管
+                    // 唤醒刚体是为了Unity物理引擎的碰撞检测
                     attachedRigidbody.WakeUp();
                     return false;
                 }
             }
 
-            // 如果角色控制器为空 或 外部开发者认为碰撞体参与碰撞/地面检测 则参与碰撞/地面检测
-            return Owner.Controller is null || Owner.Controller.IsColliderValidForCollisions(coll);
+            // 如果角色控制器为空 或 外部开发者认为该碰撞体参与碰撞/地面检测 则参与碰撞/地面检测
+            return Owner.Controller is null 
+                || Owner.Controller.IsColliderValidForCollisions(coll);
         }
 
         /// <summary>

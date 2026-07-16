@@ -4,6 +4,7 @@ namespace MotionCharacterController
 {
     public partial class MotionCC
     {
+        #region 跳跃请求
         /// <summary>
         /// 消耗跳跃请求
         /// </summary>
@@ -11,7 +12,9 @@ namespace MotionCharacterController
         {
             jumpRequested = false;
         }
+        #endregion
 
+        #region 状态快照
         /// <summary>
         /// 获取状态
         /// </summary>
@@ -48,7 +51,9 @@ namespace MotionCharacterController
             context.AttachedRigidbody = state.AttachedRigidbody;
             context.AttachedRigidbodyVelocity = state.AttachedRigidbodyVelocity;
         }
+        #endregion
 
+        #region 强制离地
         /// <summary>
         /// 强制解除接地状态
         /// </summary>
@@ -58,7 +63,7 @@ namespace MotionCharacterController
             context.MustUnground = true;
             context.MustUngroundTimeCounter = time;
         }
-        
+
         /// <summary>
         /// 是否需要解除接地状态
         /// </summary>
@@ -67,7 +72,9 @@ namespace MotionCharacterController
         {
             return context.MustUnground || context.MustUngroundTimeCounter > 0f;
         }
+        #endregion
 
+        #region 位姿控制
         /// <summary>
         /// 直接移动角色到目标位置
         /// </summary>
@@ -139,7 +146,9 @@ namespace MotionCharacterController
                 context.InitialTickRotation = rotation.normalized;
             }
         }
+        #endregion
 
+        #region 胶囊与求解开关
         /// <summary>
         /// 设置Context中的胶囊体尺寸
         /// </summary>
@@ -192,7 +201,9 @@ namespace MotionCharacterController
         {
             context.SolveGrounding = active;
         }
+        #endregion
 
+        #region 工具与查询转发
         /// <summary>
         /// 获取移动速度
         /// </summary>
@@ -260,7 +271,9 @@ namespace MotionCharacterController
         {
             return collisionSolver.CharacterCollisionsRaycast(position, direction, distance, out closestHit, hits, acceptOnlyStableGroundLayer);
         }
+        #endregion
 
+        #region 调试Gizmos
         /// <summary>
         /// 绘制地面检测Gizmos
         /// </summary>
@@ -295,5 +308,6 @@ namespace MotionCharacterController
             Gizmos.color = grounded ? Color.green : Color.red;
             Gizmos.DrawSphere(grounded ? hit.point : probeEnd, 0.04f);
         }
+        #endregion
     }
 }

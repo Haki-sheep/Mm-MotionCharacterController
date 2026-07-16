@@ -7,12 +7,15 @@ namespace MotionCharacterController
     [Serializable]
     public partial class MccConfig
     {
+        #region 胶囊体
         [Header("胶囊体")]
         public float capsuleHeight = 2f;
         public float capsuleRadius = 0.5f;
-        public float capsuleYOffset = 1f;
+        public float capsuleYOffset = 0f;
         public PhysicsMaterial capsulePhysicsMaterial;
+        #endregion
 
+        #region 示例移动
         [Header("示例移动")]
         [Tooltip("示例 PlayerController 地面目标速度")]
         public float moveSpeed = 10f;
@@ -24,7 +27,9 @@ namespace MotionCharacterController
         public float AirAcceleration = 30f;
         [Tooltip("示例 PlayerController 空中水平速度上限")]
         public float maxAirMoveSpeed = 10f;
+        #endregion
 
+        #region 跳跃和重力
         [Header("跳跃和重力")]
         [Tooltip("起跳向上速度 对齐 KCC JumpUpSpeed")]
         public float jumpSpeed = 10f;
@@ -32,7 +37,9 @@ namespace MotionCharacterController
         public float gravity = -30f;
         [Tooltip("空中阻力 0  Drag=0")]
         public float airDrag = 0f;
+        #endregion
 
+        #region 地面
         [Header("地面")]
         [Tooltip("角色能稳定站住的最大坡度角比如 60 表示小于等于 60 度的斜坡都算地面")]
         public float maxStableSlopeAngle = 60f;
@@ -44,7 +51,9 @@ namespace MotionCharacterController
         public LayerMask stableGroundLayers = -1;
         [Tooltip("是否开启离散碰撞事件开启后，角色最终位置与碰撞体重叠时会回调 OnDiscreteCollisionDetected")]
         public bool discreteCollisionEvents = false;
+        #endregion
 
+        #region 台阶
         [Header("台阶")]
         [Tooltip("台阶处理方式None 不爬台阶；Standard 普通台阶；Extra 会额外检测更浅的小台阶")]
         public StepHandlingMethod stepHandling = StepHandlingMethod.Standard;
@@ -54,7 +63,9 @@ namespace MotionCharacterController
         public bool allowSteppingWithoutStableGrounding = false;
         [Tooltip("Extra 台阶模式下，台阶至少要有多深才允许踩上去值越大越不容易爬很薄的边")]
         public float minRequiredStepDepth = 0.1f;
+        #endregion
 
+        #region 边缘
         [Header("边缘")]
         [Tooltip("是否开启边缘和落差检测开启后，角色站在平台边缘时会更稳定，不容易半个身子悬空还被当作站稳")]
         public bool ledgeAndDenivelationHandling = true;
@@ -65,7 +76,9 @@ namespace MotionCharacterController
         [Range(1f, 180f)]
         [Tooltip("地面内外法线落差超过这个角度时，不再认为角色能稳定贴地用于防止陡坎处强行吸地")]
         public float maxStableDenivelationAngle = 180f;
+        #endregion
 
+        #region 刚体交互
         [Header("刚体交互")]
         [Tooltip("是否处理移动平台、动态刚体推挤、站在刚体上跟随移动等逻辑")]
         public bool interactiveRigidbodyHandling = true;
@@ -75,13 +88,17 @@ namespace MotionCharacterController
         public float simulatedCharacterMass = 1f;
         [Tooltip("离开移动平台时是否保留平台速度开启后从移动平台跳下会带一点惯性")]
         public bool preserveAttachedRigidbodyMomentum = true;
+        #endregion
 
+        #region 约束
         [Header("约束")]
         [Tooltip("是否把角色移动限制在某个平面上普通 3D 角色一般关闭")]
         public bool hasPlanarConstraint = false;
         [Tooltip("开启平面约束时使用的法线方向比如 forward 表示限制在与 Z 轴垂直的平面上")]
         public Vector3 planarConstraintAxis = Vector3.forward;
+        #endregion
 
+        #region 求解安全
         [Header("求解安全")]
         [Tooltip("一次移动最多做多少次碰撞扫掠越大越不容易卡墙角，但性能消耗更高")]
         public int maxMovementIterations = 5;
@@ -93,11 +110,14 @@ namespace MotionCharacterController
         public bool killVelocityWhenExceedMaxMovementIterations = true;
         [Tooltip("超过最大移动迭代次数时是否丢弃剩余位移开启能避免角色被挤进墙里")]
         public bool killRemainingMovementWhenExceedMaxMovementIterations = true;
+        #endregion
 
+        #region 系统
         [Header("系统")]
         [Tooltip("系统级开关 写入后同步到 MccSystem.AutoSimulation 关闭后需自行调用 MccSystem.Simulate")]
         public bool autoSimulation = true;
         [Tooltip("是否开启角色显示位置插值开启后画面更顺；如果相机或角色抖动，可临时关闭对比测试")]
         public bool interpolate = true;
+        #endregion
     }
 }

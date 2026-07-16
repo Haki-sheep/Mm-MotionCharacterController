@@ -4,13 +4,15 @@ namespace MotionCharacterController
 {
     /// <summary>
     /// 碰撞检测与处理
+    /// 管移动过程中的重叠推出、扫掠撞墙、滑动、上台阶衔接、墙角折线
+    /// 不管向下接地探测（那是 GroundSolver）也不直接结算推箱子冲量（记账后交给 RigidbodySolver）
     /// </summary>
     public class CollisionSolver
     {
+        #region 字段与构造
         private readonly MccMotorContext context;
         private readonly StepSolver stepSolver;
         private readonly RigidbodySolver rigidbodySolver;
-
 
         /// <summary>
         /// 碰撞求解需要依赖台阶求解器与刚体求解器
@@ -24,7 +26,9 @@ namespace MotionCharacterController
             this.stepSolver = stepSolver;
             this.rigidbodySolver = rigidbodySolver;
         }
+        #endregion
 
+        #region 解重叠
         /// <summary>
         /// 解算初始重叠
         /// </summary>
@@ -78,7 +82,9 @@ namespace MotionCharacterController
                 }
             }
         }
+        #endregion
 
+        #region 移动主循环
         /// <summary>
         /// 移动
         /// 该方法主要解决角色移动时与碰撞体的碰撞问题
@@ -340,7 +346,9 @@ namespace MotionCharacterController
             context.DebugLastHitPoint = hit.Point;
             context.DebugLastHitNormal = hit.Normal;
         }
+        #endregion
 
+        #region 离散碰撞事件
         /// <summary>
         /// 处理离散碰撞事件
         /// </summary>
@@ -359,7 +367,9 @@ namespace MotionCharacterController
                 context.Owner.Controller?.OnDiscreteCollisionDetected(context.InternalColliders[i]);
             }
         }
+        #endregion
 
+        #region 物理查询
         /// <summary>
         /// 角色碰撞体重叠
         /// </summary>
@@ -461,16 +471,27 @@ namespace MotionCharacterController
         /// <param name="hits">碰撞数组</param>
         /// <param name="acceptOnlyStableGroundLayer">只接受稳定地面层</param>
         /// <returns>碰撞数</returns>
-        public int CharacterCollisionsRaycast(Vector3 position, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, bool acceptOnlyStableGroundLayer = false)
+        public int CharacterCollisionsRaycast(Vector3 position,
+                                              Vector3 direction,
+                                              float distance,
+                                              out RaycastHit closestHit,
+                                              RaycastHit[] hits,
+                                              bool acceptOnlyStableGroundLayer = false)
         {
             // 获取查询层
-            int queryLayers = acceptOnlyStableGroundLayer ? context.CollidableLayers & context.Config.stableGroundLayers : context.CollidableLayers;
+            int queryLayers = acceptOnlyStableGroundLayer ?
+                    // 如果只接受稳定地面层 则取可碰撞层掩码与稳定地面层掩码的与运算
+                    context.CollidableLayers & context.Config.stableGroundLayers
+                    // 如果不需要只接受稳定地面层 则取可碰撞层掩码
+                    : context.CollidableLayers;
             // 进行射线检测
             int rawCount = Physics.RaycastNonAlloc(position, direction, hits, distance, queryLayers, QueryTriggerInteraction.Ignore);
             // 过滤碰撞
             return FilterHits(hits, rawCount, 0f, out closestHit);
         }
+        #endregion
 
+        #region 法线与速度投影
         /// <summary>
         /// 获取障碍物法线
         /// </summary>
@@ -489,7 +510,6 @@ namespace MotionCharacterController
 
             return obstructionNormal.sqrMagnitude > 0f ? obstructionNormal : hitNormal;
         }
-
 
         /// <summary>
         /// 投影已知重叠信息
@@ -615,6 +635,7 @@ namespace MotionCharacterController
             remainingMagnitude *= velocityFactor;
             remainingDirection = velocity.sqrMagnitude > 0f ? velocity.normalized : Vector3.zero;
         }
+
         /// <summary>
         /// 投影速度
         /// </summary>
@@ -694,8 +715,9 @@ namespace MotionCharacterController
                 creaseDirection = Vector3.Dot(tmpCreaseDirection, currentVelocity) < 0f ? -tmpCreaseDirection : tmpCreaseDirection;
             }
         }
+        #endregion
 
-
+        #region 过滤与记录
         /// <summary>
         /// 过滤碰撞体
         /// </summary>
@@ -777,5 +799,6 @@ namespace MotionCharacterController
             context.Overlaps[context.OverlapsCount] = new OverlapResult(normal, collider);
             context.OverlapsCount++;
         }
+        #endregion
     }
 }
