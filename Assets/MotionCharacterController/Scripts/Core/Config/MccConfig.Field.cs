@@ -30,7 +30,7 @@ namespace MotionCharacterController
         public float jumpSpeed = 10f;
         [Tooltip("重力加速度 对齐 KCC Gravity.y=-30")]
         public float gravity = -30f;
-        [Tooltip("空中阻力 0 更接近 KCC 示例 Drag=0")]
+        [Tooltip("空中阻力 0  Drag=0")]
         public float airDrag = 0f;
 
         [Header("地面")]
