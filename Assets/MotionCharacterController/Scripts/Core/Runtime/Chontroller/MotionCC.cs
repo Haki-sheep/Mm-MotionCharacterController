@@ -43,6 +43,7 @@ namespace MotionCharacterController
         public Vector3 CharacterForward => context.CharacterForward;
         public Vector3 CharacterRight => context.CharacterRight;
         public Vector3 Velocity => context.BaseVelocity + context.AttachedRigidbodyVelocity;
+        public float VerticalSpeed => Vector3.Dot(context.BaseVelocity, context.CharacterUp);
         public Rigidbody AttachedRigidbody => context.AttachedRigidbody;
         public Vector3 AttachedRigidbodyVelocity => context.AttachedRigidbodyVelocity;
         public CapsuleCollider Capsule => context.Capsule;
